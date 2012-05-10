@@ -79,4 +79,48 @@ describe Array do
     result.last[3][3].should be_within(@tolerance).of(-2.0)
   end
 
+  it 'should calculate RFFT2D properly' do
+    data = [[[20.0, -2.0,  0.0, -2.0],
+             [-2.0,  0.0,  0.0,  2.0],
+             [ 0.0,  0.0,  0.0,  0.0],
+             [-2.0,  2.0,  0.0,  0.0]],
+            [[ 0.0, -2.0,  0.0,  2.0],
+             [-2.0,  2.0,  0.0,  0.0],
+             [ 0.0,  0.0,  0.0,  0.0],
+             [ 2.0,  0.0,  0.0, -2.0]]]
+    result = data.rfft2d
+    result.first[0][0].should be_within(@tolerance).of(1.0)
+    result.first[0][1].should be_within(@tolerance).of(1.0)
+    result.first[0][2].should be_within(@tolerance).of(1.0)
+    result.first[0][3].should be_within(@tolerance).of(1.0)
+    result.first[1][0].should be_within(@tolerance).of(1.0)
+    result.first[1][1].should be_within(@tolerance).of(2.0)
+    result.first[1][2].should be_within(@tolerance).of(2.0)
+    result.first[1][3].should be_within(@tolerance).of(1.0)
+    result.first[2][0].should be_within(@tolerance).of(1.0)
+    result.first[2][1].should be_within(@tolerance).of(2.0)
+    result.first[2][2].should be_within(@tolerance).of(2.0)
+    result.first[2][3].should be_within(@tolerance).of(1.0)
+    result.first[3][0].should be_within(@tolerance).of(1.0)
+    result.first[3][1].should be_within(@tolerance).of(1.0)
+    result.first[3][2].should be_within(@tolerance).of(1.0)
+    result.first[3][3].should be_within(@tolerance).of(1.0)
+    result.last[0][0].should be_within(@tolerance).of(0.0)
+    result.last[0][1].should be_within(@tolerance).of(0.0)
+    result.last[0][2].should be_within(@tolerance).of(0.0)
+    result.last[0][3].should be_within(@tolerance).of(0.0)
+    result.last[1][0].should be_within(@tolerance).of(0.0)
+    result.last[1][1].should be_within(@tolerance).of(0.0)
+    result.last[1][2].should be_within(@tolerance).of(0.0)
+    result.last[1][3].should be_within(@tolerance).of(0.0)
+    result.last[2][0].should be_within(@tolerance).of(0.0)
+    result.last[2][1].should be_within(@tolerance).of(0.0)
+    result.last[2][2].should be_within(@tolerance).of(0.0)
+    result.last[2][3].should be_within(@tolerance).of(0.0)
+    result.last[3][0].should be_within(@tolerance).of(0.0)
+    result.last[3][1].should be_within(@tolerance).of(0.0)
+    result.last[3][2].should be_within(@tolerance).of(0.0)
+    result.last[3][3].should be_within(@tolerance).of(0.0)
+  end
+
 end

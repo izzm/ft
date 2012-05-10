@@ -1,7 +1,7 @@
 = FFT for Ruby
 
 This gem contains a library written in C to perform Fast Fourier Transform (FFT[http://en.wikipedia.org/wiki/Fast_Fourier_transform]).
-The extension allows to do an FFT and reverse FFT computation on one dimensional data.
+The extension allows to do an FFT and reverse FFT computation on one and two dimensional data.
 
 == Instalation
 
@@ -33,7 +33,8 @@ and install it:
           [0.0, 0.0, 0.0, 0.0],
           [0.0, 0.0, 0.0, 0.0],
           [0.0, 0.0, 0.0, 0.0]]]
-  data.fft2d                    # will return FFT for 2D data
+  result = data.fft2d           # will return FFT for 2D data
+  result.rfft2d                 # will return reverse FFT for 2D data
 
 == Credits
 

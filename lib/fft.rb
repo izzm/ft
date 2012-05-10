@@ -1,7 +1,5 @@
-require 'fft_api'
+require [File.dirname(__FILE__), '..', 'ext', 'fft_api'].join('/')
 
-VERSION = '0.1.1'
-
-class Array  
+class Array
   include FFTAPI
 end

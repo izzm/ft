@@ -5,3 +5,6 @@ ext/*.so
 ext/*.bundle
 ext/*.log
 pkg/*
+*~
+*.sw[po]
+*.gem

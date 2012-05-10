@@ -1,0 +1,33 @@
+= FFT for Ruby
+
+This gem contains a library written in C to perform Fast Fourier Transform (FFT[http://en.wikipedia.org/wiki/Fast_Fourier_transform]).
+The extension allows to do an FFT and reverse FFT computation on one dimensional data.
+
+== Instalation
+
+To install the extension clone the repository on your machine:
+
+  git clone git://github.com/placek/FFT.git
+
+build a gem:
+
+  gem build fft.gemspec
+
+and install it:
+
+  gem install fft-*.gem
+
+== Usage
+
+  require 'fft'
+  data = [[2.0, 1.0, 1.0, 2.0], # real parts of data
+          [0.0, 0.0, 0.0, 0.0]] # imaginary parts of data
+  result = data.fft             # will return a FFT
+  result.rfft                   # will return reverse FFT
+
+== Credits
+
+ * Paweł Placzyński
+ * Jude Sutton
+
+https://github.com/placek/FFT

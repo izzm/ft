@@ -25,9 +25,19 @@ and install it:
   result = data.fft             # will return a FFT
   result.rfft                   # will return reverse FFT
 
+  data = [[[1.0, 1.0, 1.0, 1.0],
+          [1.0, 2.0, 2.0, 1.0],
+          [1.0, 2.0, 2.0, 1.0],
+          [1.0, 1.0, 1.0, 1.0]],
+         [[0.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0]]]
+  data.fft2d                    # will return FFT for 2D data
+
 == Credits
 
- * Paweł Placzyński
- * Jude Sutton
+* Paweł Placzyński
+* Jude Sutton
 
 https://github.com/placek/FFT

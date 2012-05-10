@@ -1,11 +1,11 @@
 #include "ruby.h"
 #include <math.h>
+#include <stdlib.h>
 
 #ifndef TRUE
 #define TRUE 1
 #define FALSE 0
 #endif
-
 
 
 // Validate the incoming array
@@ -18,7 +18,7 @@ static int validate( VALUE self ) {
 
     // make sure we have an array of two arrays
     if( RARRAY_LEN( self ) != 2 ) return FALSE;
-    
+
     // make sure the arrays are of the same length
     if( RARRAY_LEN( values[0] ) != RARRAY_LEN( values[1] ) ) return FALSE;
 
@@ -29,87 +29,96 @@ static int validate( VALUE self ) {
     return TRUE;
 }
 
-static VALUE perform_fft( double **values, long length, int direction ){
+static VALUE perform_fft( double **values, long length, int direction )
+{
     VALUE outArray = rb_ary_new2( 2 );
     VALUE xArray = rb_ary_new2( length );
     VALUE yArray = rb_ary_new2( length );
-    
-    long exponent, i, i1, j, k, i2, l, l1, l2;
-    double c1,c2,tx,ty,t1,t2,u1,u2,z;
 
-    // Caculate the exponent
-    exponent = 0;
-    i = length;
-    while( i >>= 1 ){
-        exponent++;
+    unsigned int position, target, mask, jump;
+    unsigned int step, group, pair, i;
+    double multiplier_real, multiplier_imag, factor_real, factor_imag, product_real, product_imag;
+    double temp_real, temp_imag, delta, sine, pi = direction * (-3.14159265358979323846);
+    double old_factor_real;
+
+    // do the bit reversal
+    target = 0;
+    for( position = 0; position < length; ++position )
+    {
+        if( target > position )
+        {
+            temp_real = values[0][position];
+            temp_imag = values[1][position];
+            values[0][position] = values[0][target];
+            values[1][position] = values[1][target];
+            values[0][target] = temp_real;
+            values[1][target] = temp_imag;
+        }
+        mask = length;
+        while( target & (mask >>= 1))
+            target &= ~mask;
+        target |= mask;
     }
 
-    // Do the bit reversal
-    i2 = length >> 1;
-    j = 0;
-    for( i = 0; i < ( length - 1 ); i++ ){
-        if( i < j ){
-            tx = values[0][i];
-            ty = values[1][i];
-            values[0][i] = values[0][j];
-            values[1][i] = values[1][j];
-            values[0][j] = tx;
-            values[1][j] = ty;
-        }
-        k = i2;
-        while( k <= j ){
-            j -= k;
-            k >>= 1;
-        }
-        j += k;
-    }
-    
-    // Compute the FFT
-    c1 = -1.0;
-    c2 = 0.0;
-    l2 = 1;
-    for( l = 0; l < exponent; l++ ){
-        l1 = l2;
-        l2 <<= 1;
-        u1 = 1.0;
-        u2 = 0.0;
-        for( j = 0; j < l1; j++ ){
-            for( i = j; i < length; i += l2){
-                i1 = i + l1;
-                t1 = u1 * values[0][i1] - u2 * values[1][i1];
-                t2 = u1 * values[1][i1] + u2 * values[0][i1];
-                values[0][i1] = values[0][i] - t1;
-                values[1][i1] = values[1][i] - t2;
-                values[0][i] += t1;
-                values[1][i] += t2;
+    // compute the FFT
+    for( step = 1; step < length; step <<= 1 )
+    {
+        // jump to the next entry of the same transform factor
+        jump = step << 1;
+        // angle increment
+        delta = pi / (double) step;
+        // auxiliary sin(delta / 2)
+        sine = sin(delta * 0.5);
+        // multiplier for trigonometric recurrence
+        multiplier_real = -2.0 * sine * sine;
+        multiplier_imag = sin(delta);
+        // start value for transform factor, fi = 0
+        factor_real = 1.0;
+        factor_imag = 0.0;
+        // iteration through groups of different transform factor
+        for( group = 0; group < step; ++group )
+        {
+            // iteration within group
+            for( pair = group; pair < length; pair += jump )
+            {
+                position = pair + step;
+                // second term of two-point transform
+                product_real = factor_real * values[0][position] - factor_imag * values[1][position];
+                product_imag = factor_imag * values[0][position] + factor_real * values[1][position];
+                // transform for fi + pi
+                values[0][position] = values[0][pair] - product_real;
+                values[1][position] = values[1][pair] - product_imag;
+                // transform for fi
+                values[0][pair] += product_real;
+                values[1][pair] += product_imag;
             }
-            z = u1 * c1 - u2 * c2;
-            u2 = u1 * c2 + u2 * c1;
-            u1 = z;
+            // successive transform factor via trigonometric recurrence
+            old_factor_real = factor_real;
+            factor_real = multiplier_real * factor_real - multiplier_imag * factor_imag + factor_real;
+            factor_imag = multiplier_imag * old_factor_real + multiplier_real * factor_imag + factor_imag;
         }
-        c2 = sqrt( ( 1.0 - c1 ) / 2.0 );
-        if( direction == 1 ){
-            c2 = -c2;
-        }
-        c1 = sqrt( ( 1.0 + c1 ) / 2.0 );
     }
 
-    // Scaling for forward transform
-    if( direction == 1 ){
-        for( i = 0; i < length; i++ ){
+    // scaling for inverse transform
+    if( direction == -1 )
+    {
+        for( i = 0; i < length; i++ )
+        {
             values[0][i] /= length;
             values[1][i] /= length;
         }
     }
+
     // convert the doubles into ruby numbers and stick them into a ruby array
-    for( i = 0; i < length; i++ ){
+    for( i = 0; i < length; i++ )
+    {
         rb_ary_push( xArray, DBL2NUM( values[0][i] ) );
         rb_ary_push( yArray, DBL2NUM( values[1][i] ) );
     }
 
     rb_ary_push( outArray, xArray );
     rb_ary_push( outArray, yArray );
-    
+
     return outArray;
 }
 
@@ -135,7 +144,7 @@ static VALUE prepare_fft( VALUE inArray, int direction ){
         transformed[0][i] = NUM2DBL( RARRAY_PTR( values[0] )[i] );
         transformed[1][i] = NUM2DBL( RARRAY_PTR( values[1] )[i] );
     }
-    
+
     // do the actual transform
     outArray = perform_fft( transformed, length, direction );
 
@@ -143,7 +152,7 @@ static VALUE prepare_fft( VALUE inArray, int direction ){
     free( transformed[0] );
     free( transformed[1] );
     free( transformed );
-    
+
     return outArray;
 }
 

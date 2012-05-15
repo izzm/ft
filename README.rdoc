@@ -1,40 +1,55 @@
-= FFT for Ruby
+= FT for Ruby
 
-This gem contains a library written in C to perform Discrete Fourier Transform (DFT[http://en.wikipedia.org/wiki/Discrete_Fourier_transform]), as well as Fast Fourier Transform (FFT[http://en.wikipedia.org/wiki/Fast_Fourier_transform]).
-The extension allows to do the DFT, reverse DFT, FFT and reverse FFT computation on one and two dimensional data.
+This gem contains a library written in C to perform:
+
+* Discrete Hartley Transform (DHT[http://en.enwikipedia.enwikipediaorg/wiki/Discrete_Hartley_transform]),
+* Fast Hartley Transform (FHT),
+* Discrete Fourier Transform (DFT[http://en.wikipedia.org/wiki/Discrete_Fourier_transform]),
+* Fast Fourier Transform (FFT[http://en.wikipedia.org/wiki/Fast_Fourier_transform]).
+
+The extension allows to do the transform in both directions. Moreover the DFT and FFT are avaliable in on and two dimensions to process.
 
 == Instalation
 
 To install the extension clone the repository on your machine:
 
-  git clone git://github.com/placek/FFT.git
+  git clone git://github.com/placek/ft.git
 
 build a gem:
 
-  gem build fft.gemspec
+  gem build ft.gemspec
 
 and install it:
 
-  gem install fft-*.gem
+  gem install ft-*.gem
+
+== Requirements
+
+Data for Fourier transforms is a set of complex numbers. It need to be storaged in two seperate arrays of the same dimensions. First one will contain real parts of numbers, second one - imaginary parts. The length of data should be a power of 2 (otherwise FT methods will return nil).
+
+Data for Hartley transforms is a set of real numbers. Here the only restriction is a length of array - it should be a multiplication of 2
 
 == Usage
 
-Import the FFT gem:
+Import the FT gem:
 
-  require 'fft'
+  require 'ft'
 
 Prepare some data to process:
 
-  data =   [[2.0, 1.0, 1.0, 2.0], # real parts of data
-            [0.0, 0.0, 0.0, 0.0]] # imaginary parts of data
-  data2d = [[[1.0, 1.0, 1.0, 1.0],# real parts
-            [1.0, 2.0, 2.0, 1.0], #
-            [1.0, 2.0, 2.0, 1.0], #
-            [1.0, 1.0, 1.0, 1.0]],#
-           [[0.0, 0.0, 0.0, 0.0], # imaginary parts
-            [0.0, 0.0, 0.0, 0.0], #
-            [0.0, 0.0, 0.0, 0.0], #
-            [0.0, 0.0, 0.0, 0.0]]]#
+  data =   [[2.0, 1.0, 1.0, 2.0],   # real parts of data
+            [0.0, 0.0, 0.0, 0.0]]   # imaginary parts of data
+
+  data2d = [[[1.0, 1.0, 1.0, 1.0],  # real parts
+             [1.0, 2.0, 2.0, 1.0],  #
+             [1.0, 2.0, 2.0, 1.0],  #
+             [1.0, 1.0, 1.0, 1.0]], #
+            [[0.0, 0.0, 0.0, 0.0],  # imaginary parts
+             [0.0, 0.0, 0.0, 0.0],  #
+             [0.0, 0.0, 0.0, 0.0],  #
+             [0.0, 0.0, 0.0, 0.0]]] #
+
+  hdata =   [2.0, 1.0, 1.0, 2.0]    # data for DHT or FHT
 
 Make some data processing with FFT:
 
@@ -49,6 +64,11 @@ And some data processing with DFT:
   result.rdft                   # will return reverse DFT
   result2d = data.dft2d         # will return DFT for 2D data
   result2d.rdft2d               # will return reverse DFT for 2D data
+
+Data processing with DHT or FHT:
+
+  result = hdata.dht
+  result = hdata.fht.
 
 == Credits
 

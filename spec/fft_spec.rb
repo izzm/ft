@@ -1,5 +1,5 @@
 require 'plymouth'
-require Pathname.pwd.join('lib').join('fft.rb')
+require Pathname.pwd.join('lib').join('ft.rb')
 
 describe Array do
 

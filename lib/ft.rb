@@ -1,7 +1,7 @@
-require [File.dirname(__FILE__), '..', 'ext', 'fft_api'].join('/')
+require [File.dirname(__FILE__), '..', 'ext', 'frequency_transformations'].join('/')
 
 class Array
-  include FFTAPI
+  include FrequencyTransformations
 
   def fft2d
     size = self.first.size

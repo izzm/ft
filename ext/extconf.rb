@@ -5,4 +5,4 @@ def error msg
   abort
 end
 
-create_makefile('fft_api')
+create_makefile('frequency_transformations')

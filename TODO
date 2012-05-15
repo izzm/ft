@@ -1,4 +1,4 @@
 TODO:
 
  * use instances of Complex class instead of two arrays of numbers;
- * add Hartley transform;
+ * add 2D Hartley transform;

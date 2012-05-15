@@ -19,6 +19,14 @@ class Array
     perform_fourier2d(:rfft)
   end
 
+  def dht2d
+    perform_hartley2d(:dht)
+  end
+
+  def fht2d
+    perform_hartley2d(:fht)
+  end
+
   private
 
   def perform_fourier2d method
@@ -36,6 +44,22 @@ class Array
       transformed = [first_part.first[n], first_part.last[n]].send(method)
       second_part.first << transformed.first
       second_part.last << transformed.last
+    end
+    second_part
+  end
+
+  def perform_hartley2d method
+    size = self.size
+    first_part = []
+    self.each do |el|
+      transformed = el.send(method)
+      first_part << transformed
+    end
+    first_part = first_part.transpose
+    second_part = []
+    first_part.each do |el|
+      transformed = el.send(method)
+      second_part << transformed
     end
     second_part
   end

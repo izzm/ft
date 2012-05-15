@@ -7,7 +7,7 @@ This gem contains a library written in C to perform:
 * Discrete Fourier Transform (DFT[http://en.wikipedia.org/wiki/Discrete_Fourier_transform]),
 * Fast Fourier Transform (FFT[http://en.wikipedia.org/wiki/Fast_Fourier_transform]).
 
-The extension allows to do the transform in both directions. Moreover the DFT and FFT are avaliable in on and two dimensions to process.
+The extension allows to do the transform in both directions. Moreover all the transforms are avaliable in one and two dimensions to process.
 
 == Instalation
 
@@ -50,6 +50,10 @@ Prepare some data to process:
              [0.0, 0.0, 0.0, 0.0]]] #
 
   hdata =   [2.0, 1.0, 1.0, 2.0]    # data for DHT or FHT
+  hdata2d = [[1.0, 1.0, 1.0, 1.0],  # 2D data for DHT or FHT
+             [1.0, 2.0, 2.0, 1.0],  #
+             [1.0, 2.0, 2.0, 1.0],  #
+             [1.0, 1.0, 1.0, 1.0]]  #
 
 Make some data processing with FFT:
 
@@ -68,7 +72,9 @@ And some data processing with DFT:
 Data processing with DHT or FHT:
 
   result = hdata.dht
-  result = hdata.fht.
+  result = hdata.fht
+  result = hdata2d.dht2d
+  result = hdata2d.fht2d
 
 == Credits
 

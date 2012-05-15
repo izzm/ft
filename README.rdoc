@@ -1,7 +1,7 @@
 = FFT for Ruby
 
-This gem contains a library written in C to perform Fast Fourier Transform (FFT[http://en.wikipedia.org/wiki/Fast_Fourier_transform]).
-The extension allows to do an FFT and reverse FFT computation on one and two dimensional data.
+This gem contains a library written in C to perform Discrete Fourier Transform (DFT[http://en.wikipedia.org/wiki/Discrete_Fourier_transform]), as well as Fast Fourier Transform (FFT[http://en.wikipedia.org/wiki/Fast_Fourier_transform]).
+The extension allows to do the DFT, reverse DFT, FFT and reverse FFT computation on one and two dimensional data.
 
 == Instalation
 
@@ -19,26 +19,38 @@ and install it:
 
 == Usage
 
-  require 'fft'
-  data = [[2.0, 1.0, 1.0, 2.0], # real parts of data
-          [0.0, 0.0, 0.0, 0.0]] # imaginary parts of data
-  result = data.fft             # will return a FFT
-  result.rfft                   # will return reverse FFT
+Import the FFT gem:
 
-  data = [[[1.0, 1.0, 1.0, 1.0],
-          [1.0, 2.0, 2.0, 1.0],
-          [1.0, 2.0, 2.0, 1.0],
-          [1.0, 1.0, 1.0, 1.0]],
-         [[0.0, 0.0, 0.0, 0.0],
-          [0.0, 0.0, 0.0, 0.0],
-          [0.0, 0.0, 0.0, 0.0],
-          [0.0, 0.0, 0.0, 0.0]]]
-  result = data.fft2d           # will return FFT for 2D data
-  result.rfft2d                 # will return reverse FFT for 2D data
+  require 'fft'
+
+Prepare some data to process:
+
+  data =   [[2.0, 1.0, 1.0, 2.0], # real parts of data
+            [0.0, 0.0, 0.0, 0.0]] # imaginary parts of data
+  data2d = [[[1.0, 1.0, 1.0, 1.0],# real parts
+            [1.0, 2.0, 2.0, 1.0], #
+            [1.0, 2.0, 2.0, 1.0], #
+            [1.0, 1.0, 1.0, 1.0]],#
+           [[0.0, 0.0, 0.0, 0.0], # imaginary parts
+            [0.0, 0.0, 0.0, 0.0], #
+            [0.0, 0.0, 0.0, 0.0], #
+            [0.0, 0.0, 0.0, 0.0]]]#
+
+Make some data processing with FFT:
+
+  result = data.fft             # will return FFT
+  result.rfft                   # will return reverse FFT
+  result2d = data.fft2d         # will return FFT for 2D data
+  result2d.rfft2d               # will return reverse FFT for 2D data
+
+And some data processing with DFT:
+
+  result = data.dft             # will return DFT
+  result.rdft                   # will return reverse DFT
+  result2d = data.dft2d         # will return DFT for 2D data
+  result2d.rdft2d               # will return reverse DFT for 2D data
 
 == Credits
 
 * Paweł Placzyński
 * Jude Sutton
-
-https://github.com/placek/FFT

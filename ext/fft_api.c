@@ -1,6 +1,6 @@
 /**
  * @file fft_api.c
- * @brief The C API for processing a Fast Fourier Transform (FFT) for Ruby.
+ * @brief The C API for processing a Discrete Fourier Transform (DFT) and Fast Fourier Transform (FFT) for Ruby.
  * Forked from https://github.com/slowjud/FFT
  * @author jude.sutton@gmail.com, placek@ragnarson.com
  * @date 10.05.2012
@@ -8,6 +8,12 @@
 #include "ruby.h"
 #include <math.h>
 #include <stdlib.h>
+
+#ifndef TRUE
+#define PI 3.14159265358979323846
+#define TRUE 1
+#define FALSE 0
+#endif
 
 /**
  * @brief This function validates the incoming array.
@@ -22,26 +28,26 @@
 static int validate(VALUE self)
 {
     long length;
-    VALUE * values = RARRAY_PTR( self );
+    VALUE * values = RARRAY_PTR(self);
 
     // check if instance of Array
     Check_Type(self, T_ARRAY);
 
     // make sure we have an array of two arrays
-    if(RARRAY_LEN(self) != 2) return 0;
+    if(RARRAY_LEN(self) != 2) return FALSE;
 
     // make sure the arrays are of the same length
-    if(RARRAY_LEN( values[0]) != RARRAY_LEN(values[1])) return 0;
+    if(RARRAY_LEN( values[0]) != RARRAY_LEN(values[1])) return FALSE;
 
     // make sure the size of the array is a power of 2
     length = RARRAY_LEN(values[0]);
-    if((length < 2) || (length & (length - 1))) return 0;
+    if((length < 2) || (length & (length - 1))) return FALSE;
 
-    return 1;
+    return TRUE;
 }
 
 /**
- * @brief Compute a FTT.
+ * @brief Compute a FFT.
  * This function computes the FFT and returns the Ruby Array with the same size
  * and structure as input.
  * @see validate()
@@ -60,7 +66,7 @@ static VALUE perform_fft(double ** values, long length, int direction)
     unsigned int position, target, mask, jump;
     unsigned int step, group, pair, i;
     double multiplier_real, multiplier_imag, factor_real, factor_imag, product_real, product_imag;
-    double temp_real, temp_imag, delta, sine, pi = direction * (-3.14159265358979323846);
+    double temp_real, temp_imag, delta, sine, pi = direction * (-PI);
     double old_factor_real;
 
     // do the bit reversal
@@ -145,6 +151,73 @@ static VALUE perform_fft(double ** values, long length, int direction)
 }
 
 /**
+ * @brief Compute a DFT.
+ * This function computes the DFT and returns the Ruby Array with the same size
+ * and structure as input.
+ * @see validate()
+ * @author placek@ragnarson.com
+ * @param values An array of processing data.
+ * @params length Length of processing data.
+ * @params direction An DFT direction (1 - forward DFT, -1 - reverse DFT).
+ * @return An Ruby Array with DFT processed data.
+ */
+static VALUE perform_dft(double ** values, long length, int direction)
+{
+    long i, k;
+    double arg;
+    double cosarg, sinarg;
+    double * temp_values[2];
+
+    // prepare memory and result arrays
+    VALUE outArray = rb_ary_new2(2);
+    VALUE xArray = rb_ary_new2(length);
+    VALUE yArray = rb_ary_new2(length);
+    temp_values[0] = malloc(length * sizeof(double));
+    temp_values[1] = malloc(length * sizeof(double));
+
+    // do the calculations
+    for(i = 0; i < length; i++)
+    {
+        temp_values[0][i] = 0;
+        temp_values[1][i] = 0;
+        arg = - direction * 2.0 * PI * (double)i / (double)length;
+        for(k = 0; k < length; k++)
+        {
+            cosarg = cos(k * arg);
+            sinarg = sin(k * arg);
+            temp_values[0][i] += (values[0][k] * cosarg - values[1][k] * sinarg);
+            temp_values[1][i] += (values[0][k] * sinarg + values[1][k] * cosarg);
+        }
+    }
+
+    // copy data to final arrays, process for inverse transform
+    if(direction == -1)
+    {
+        for(i = 0; i < length; i++)
+        {
+            rb_ary_push(xArray, DBL2NUM(temp_values[0][i] / (double)length));
+            rb_ary_push(yArray, DBL2NUM(temp_values[1][i] / (double)length));
+        }
+    } else {
+        for(i = 0; i < length; i++)
+        {
+            rb_ary_push(xArray, DBL2NUM(temp_values[0][i]));
+            rb_ary_push(yArray, DBL2NUM(temp_values[1][i]));
+        }
+    }
+
+    // free the memory
+    free(temp_values[0]);
+    free(temp_values[1]);
+
+    // prepare result and return it
+    rb_ary_push(outArray, xArray);
+    rb_ary_push(outArray, yArray);
+
+    return outArray;
+}
+
+/**
  * @brief Prepare data to be processed.
  * This function converts a Ruby Array values into a C values to be processed
  * by perform_fft(). After processing FFT it returns it results.
@@ -188,6 +261,49 @@ static VALUE prepare_fft(VALUE inArray, int direction)
 }
 
 /**
+ * @brief Prepare data to be processed.
+ * This function converts a Ruby Array values into a C values to be processed
+ * by perform_dft(). After processing DFT it returns it results.
+ * @see perform_dft()
+ * @author jude.sutton@gmail.com
+ * @params inArray A Ruby input data array.
+ * @params direction An DFT direction (1 - forward DFT, -1 - reverse DFT).
+ * @return The output Ruby Array with DFT processed data.
+ */
+static VALUE prepare_dft(VALUE inArray, int direction)
+{
+    long i, length;
+    VALUE * values;
+    double ** transformed;
+    VALUE outArray;
+
+    if(!validate(inArray))
+        return Qnil;
+
+    // convert the ruby array into a C array of integers using NUM2DBL(Fixnum)
+    values = RARRAY_PTR(inArray);
+    length = RARRAY_LEN(values[0]);
+    transformed = malloc(sizeof(double) * 2);
+    transformed[0] = malloc(sizeof(double*) * RARRAY_LEN(values[0]));
+    transformed[1] = malloc(sizeof(double*) * RARRAY_LEN(values[1]));
+    for( i = 0; i < length; i++ ) {
+        // process values
+        transformed[0][i] = NUM2DBL(RARRAY_PTR(values[0])[i]);
+        transformed[1][i] = NUM2DBL(RARRAY_PTR(values[1])[i]);
+    }
+
+    // do the actual transform
+    outArray = perform_dft(transformed, length, direction);
+
+    // no memory leaks
+    free(transformed[0]);
+    free(transformed[1]);
+    free(transformed);
+
+    return outArray;
+}
+
+/**
  * @brief Compute a forward FFT.
  * @author jude.sutton@gmail.com
  * @params self A Ruby input data array.
@@ -210,9 +326,31 @@ static VALUE reverse_fft(VALUE self)
 }
 
 /**
+ * @brief Compute a forward DFT.
+ * @author jude.sutton@gmail.com
+ * @params self A Ruby input data array.
+ * @return A result of forward DFT.
+ */
+static VALUE forward_dft(VALUE self)
+{
+    return prepare_dft(self, 1);
+}
+
+/**
+ * @brief Compute a reverse DFT.
+ * @author jude.sutton@gmail.com
+ * @params self A Ruby input data array.
+ * @return A result of reverse DFT.
+ */
+static VALUE reverse_dft(VALUE self)
+{
+    return prepare_dft(self, -1);
+}
+
+/**
  * @brief Initialize the FFTAPI module.
  * Initializes the module and defines methods.
- * @author jude.sutton@gmail.com
+ * @author placek@ragnarson.com
  */
 VALUE FFT;
 void Init_fft_api()
@@ -220,4 +358,6 @@ void Init_fft_api()
     FFT = rb_define_module("FFTAPI");
     rb_define_method(FFT, "fft", forward_fft, 0);
     rb_define_method(FFT, "rfft", reverse_fft, 0);
+    rb_define_method(FFT, "dft", forward_dft, 0);
+    rb_define_method(FFT, "rdft", reverse_dft, 0);
 }

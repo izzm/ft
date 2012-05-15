@@ -3,80 +3,41 @@ require [File.dirname(__FILE__), '..', 'ext', 'frequency_transformations'].join(
 class Array
   include FrequencyTransformations
 
-  def fft2d
-    size = self.first.size
-    first_fft = [[],[]]
-    size.times do |n|
-      fft = [self.first[n], self.last[n]].fft
-      first_fft.first << fft.first
-      first_fft.last << fft.last
-    end
-    real, imag = first_fft
-    first_fft = [real.transpose, imag.transpose]
-    second_fft = [[],[]]
-    size.times do |n|
-      fft = [first_fft.first[n], first_fft.last[n]].fft
-      second_fft.first << fft.first
-      second_fft.last << fft.last
-    end
-    second_fft
-  end
-
-  def rfft2d
-    size = self.first.size
-    first_fft = [[],[]]
-    size.times do |n|
-      fft = [self.first[n], self.last[n]].rfft
-      first_fft.first << fft.first
-      first_fft.last << fft.last
-    end
-    real, imag = first_fft
-    first_fft = [real.transpose, imag.transpose]
-    second_fft = [[],[]]
-    size.times do |n|
-      fft = [first_fft.first[n], first_fft.last[n]].rfft
-      second_fft.first << fft.first
-      second_fft.last << fft.last
-    end
-    second_fft
-  end
-
   def dft2d
-    size = self.first.size
-    first_dft = [[],[]]
-    size.times do |n|
-      dft = [self.first[n], self.last[n]].dft
-      first_dft.first << dft.first
-      first_dft.last << dft.last
-    end
-    real, imag = first_dft
-    first_dft = [real.transpose, imag.transpose]
-    second_dft = [[],[]]
-    size.times do |n|
-      dft = [first_dft.first[n], first_dft.last[n]].dft
-      second_dft.first << dft.first
-      second_dft.last << dft.last
-    end
-    second_dft
+    perform_fourier2d(:dft)
   end
 
   def rdft2d
+    perform_fourier2d(:rdft)
+  end
+
+  def fft2d
+    perform_fourier2d(:fft)
+  end
+
+  def rfft2d
+    perform_fourier2d(:rfft)
+  end
+
+  private
+
+  def perform_fourier2d method
     size = self.first.size
-    first_dft = [[],[]]
+    first_part = [[],[]]
     size.times do |n|
-      dft = [self.first[n], self.last[n]].rdft
-      first_dft.first << dft.first
-      first_dft.last << dft.last
+      transformed = [self.first[n], self.last[n]].send(method)
+      first_part.first << transformed.first
+      first_part.last << transformed.last
     end
-    real, imag = first_dft
-    first_dft = [real.transpose, imag.transpose]
-    second_dft = [[],[]]
+    real, imag = first_part
+    first_part = [real.transpose, imag.transpose]
+    second_part = [[],[]]
     size.times do |n|
-      dft = [first_dft.first[n], first_dft.last[n]].rdft
-      second_dft.first << dft.first
-      second_dft.last << dft.last
+      transformed = [first_part.first[n], first_part.last[n]].send(method)
+      second_part.first << transformed.first
+      second_part.last << transformed.last
     end
-    second_dft
+    second_part
   end
 
 end

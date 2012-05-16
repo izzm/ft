@@ -512,6 +512,66 @@ static VALUE prepare_dht(VALUE inArray)
 }
 
 /**
+ * @brief Prepare data and switch quarters.
+ * This function switches quarters for further frequency processing.
+ * @author placek@ragnarson.com
+ * @params inArray A Ruby input data array.
+ * @return The output Ruby Array with switched data.
+ */
+static VALUE switch_quarters(VALUE inArray)
+{
+    long length_x, length_y;
+    long i, j;
+    VALUE * values, outArray;
+    double ** temp_values, temp;
+
+    // get dimensions
+    values = RARRAY_PTR(inArray);
+    length_y = RARRAY_LEN(inArray);
+    length_x = RARRAY_LEN(values[0]);
+
+    // get values
+    temp_values = (double**)malloc(length_y * sizeof(double*));
+    for(j = 0; j < length_y; j++)
+    {
+        temp_values[j] = (double*)malloc(length_x * sizeof(double));
+        for(i = 0; i < length_x; i++)
+            temp_values[j][i] = NUM2DBL(RARRAY_PTR(values[j])[i]);
+    }
+    outArray = rb_ary_new2(length_y);
+
+    // process switching
+    for(i = 0; i < length_x / 2; i++)
+        for(j = 0; j < length_y / 2; j++)
+        {
+            temp = temp_values[j][i];
+            temp_values[j][i] = temp_values[j + length_y / 2][i + length_x / 2];
+            temp_values[j + length_y / 2][i + length_x / 2] = temp;
+        }
+
+    for(i = length_x / 2; i < length_x; i++)
+        for(j = 0; j < length_y / 2; j++)
+        {
+            temp = temp_values[j][i];
+            temp_values[j][i] = temp_values[j + length_y / 2][i - length_x / 2];
+            temp_values[j + length_y / 2][i - length_x / 2] = temp;
+        }
+
+    // rewrite values to ruby table
+    for(j = 0; j < length_y; j++)
+    {
+        VALUE tempArray = rb_ary_new2(length_x);
+        for(i = 0; i < length_x; i++)
+            rb_ary_push(tempArray, DBL2NUM(temp_values[j][i]));
+        rb_ary_push(outArray, tempArray);
+        free(temp_values[j]);
+    }
+    free(temp_values);
+
+    return outArray;
+}
+
+/**
  * @brief Compute a forward FFT.
  * @author jude.sutton@gmail.com
  * @params self A Ruby input data array.
@@ -592,4 +652,5 @@ void Init_frequency_transformations()
     rb_define_method(FT, "rdft", reverse_dft, 0);
     rb_define_method(FT, "dht", forward_dht, 0);
     rb_define_method(FT, "fht", forward_fht, 0);
+    rb_define_method(FT, "switch_quarters", switch_quarters, 0);
 }

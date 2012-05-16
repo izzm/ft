@@ -512,6 +512,70 @@ static VALUE prepare_dht(VALUE inArray)
 }
 
 /**
+ * @brief Get phase array.
+ * This function grabs the array of phase values.
+ * @author placek@ragnarson.com
+ * @params inArray A Ruby input data array.
+ * @return The output Ruby Array with phase values.
+ */
+static VALUE phase(VALUE inArray)
+{
+    long i, length;
+    VALUE * values;
+    double real, imag;
+    VALUE outArray;
+
+    if(!fourier_validate(inArray))
+        return Qnil;
+
+    // convert the ruby array into a C array of integers using NUM2DBL(Fixnum)
+    values = RARRAY_PTR(inArray);
+    length = RARRAY_LEN(values[0]);
+    outArray = rb_ary_new2(length);
+    for(i = 0; i < length; i++)
+    {
+        // process values
+        real = NUM2DBL(RARRAY_PTR(values[0])[i]);
+        imag = NUM2DBL(RARRAY_PTR(values[1])[i]);
+        rb_ary_push(outArray, DBL2NUM(atan2(real, imag)));
+    }
+
+    return outArray;
+}
+
+/**
+ * @brief Get magnitude array.
+ * This function grabs the array of magnitude values.
+ * @author placek@ragnarson.com
+ * @params inArray A Ruby input data array.
+ * @return The output Ruby Array with magnitude values.
+ */
+static VALUE magnitude(VALUE inArray)
+{
+    long i, length;
+    VALUE * values;
+    double real, imag;
+    VALUE outArray;
+
+    if(!fourier_validate(inArray))
+        return Qnil;
+
+    // convert the ruby array into a C array of integers using NUM2DBL(Fixnum)
+    values = RARRAY_PTR(inArray);
+    length = RARRAY_LEN(values[0]);
+    outArray = rb_ary_new2(length);
+    for(i = 0; i < length; i++)
+    {
+        // process values
+        real = NUM2DBL(RARRAY_PTR(values[0])[i]);
+        imag = NUM2DBL(RARRAY_PTR(values[1])[i]);
+        rb_ary_push(outArray, DBL2NUM(sqrt(real * real + imag * imag)));
+    }
+
+    return outArray;
+}
+
+/**
  * @brief Prepare data and switch quarters.
  * This function switches quarters for further frequency processing.
  * @author placek@ragnarson.com
@@ -653,4 +717,6 @@ void Init_frequency_transformations()
     rb_define_method(FT, "dht", forward_dht, 0);
     rb_define_method(FT, "fht", forward_fht, 0);
     rb_define_method(FT, "switch_quarters", switch_quarters, 0);
+    rb_define_method(FT, "magnitude", magnitude, 0);
+    rb_define_method(FT, "phase", phase, 0);
 }

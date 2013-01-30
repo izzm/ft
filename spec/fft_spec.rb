@@ -87,4 +87,172 @@ describe Array do
 
   end
 
+  describe "two dimensional Fast Fourier Transform" do
+
+    it "should calculate FFT2D properly" do
+      data = [[Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0)],
+              [Complex(1.0, 0.0), Complex(2.0, 0.0), Complex(2.0, 0.0), Complex(1.0, 0.0)],
+              [Complex(1.0, 0.0), Complex(2.0, 0.0), Complex(2.0, 0.0), Complex(1.0, 0.0)],
+              [Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0)]]
+      result = data.fft2d
+      result[0][0].real.should be_within(@tolerance).of(20.0)
+      result[0][1].real.should be_within(@tolerance).of(-2.0)
+      result[0][2].real.should be_within(@tolerance).of(0.0)
+      result[0][3].real.should be_within(@tolerance).of(-2.0)
+      result[1][0].real.should be_within(@tolerance).of(-2.0)
+      result[1][1].real.should be_within(@tolerance).of(0.0)
+      result[1][2].real.should be_within(@tolerance).of(0.0)
+      result[1][3].real.should be_within(@tolerance).of(2.0)
+      result[2][0].real.should be_within(@tolerance).of(0.0)
+      result[2][1].real.should be_within(@tolerance).of(0.0)
+      result[2][2].real.should be_within(@tolerance).of(0.0)
+      result[2][3].real.should be_within(@tolerance).of(0.0)
+      result[3][0].real.should be_within(@tolerance).of(-2.0)
+      result[3][1].real.should be_within(@tolerance).of(2.0)
+      result[3][2].real.should be_within(@tolerance).of(0.0)
+      result[3][3].real.should be_within(@tolerance).of(0.0)
+      result[0][0].imag.should be_within(@tolerance).of(0.0)
+      result[0][1].imag.should be_within(@tolerance).of(-2.0)
+      result[0][2].imag.should be_within(@tolerance).of(0.0)
+      result[0][3].imag.should be_within(@tolerance).of(2.0)
+      result[1][0].imag.should be_within(@tolerance).of(-2.0)
+      result[1][1].imag.should be_within(@tolerance).of(2.0)
+      result[1][2].imag.should be_within(@tolerance).of(0.0)
+      result[1][3].imag.should be_within(@tolerance).of(0.0)
+      result[2][0].imag.should be_within(@tolerance).of(0.0)
+      result[2][1].imag.should be_within(@tolerance).of(0.0)
+      result[2][2].imag.should be_within(@tolerance).of(0.0)
+      result[2][3].imag.should be_within(@tolerance).of(0.0)
+      result[3][0].imag.should be_within(@tolerance).of(2.0)
+      result[3][1].imag.should be_within(@tolerance).of(0.0)
+      result[3][2].imag.should be_within(@tolerance).of(0.0)
+      result[3][3].imag.should be_within(@tolerance).of(-2.0)
+    end
+
+    it "should calculate RFFT2D properly" do
+      data = [[Complex(20.0,  0.0), Complex(-2.0, -2.0), Complex( 0.0,  0.0), Complex(-2.0,  2.0)],
+              [Complex(-2.0, -2.0), Complex( 0.0,  2.0), Complex( 0.0,  0.0), Complex( 2.0,  0.0)],
+              [Complex( 0.0,  0.0), Complex( 0.0,  0.0), Complex( 0.0,  0.0), Complex( 0.0,  0.0)],
+              [Complex(-2.0,  2.0), Complex( 2.0,  0.0), Complex( 0.0,  0.0), Complex( 0.0, -2.0)]]
+      result = data.rfft2d
+      result[0][0].real.should be_within(@tolerance).of(1.0)
+      result[0][1].real.should be_within(@tolerance).of(1.0)
+      result[0][2].real.should be_within(@tolerance).of(1.0)
+      result[0][3].real.should be_within(@tolerance).of(1.0)
+      result[1][0].real.should be_within(@tolerance).of(1.0)
+      result[1][1].real.should be_within(@tolerance).of(2.0)
+      result[1][2].real.should be_within(@tolerance).of(2.0)
+      result[1][3].real.should be_within(@tolerance).of(1.0)
+      result[2][0].real.should be_within(@tolerance).of(1.0)
+      result[2][1].real.should be_within(@tolerance).of(2.0)
+      result[2][2].real.should be_within(@tolerance).of(2.0)
+      result[2][3].real.should be_within(@tolerance).of(1.0)
+      result[3][0].real.should be_within(@tolerance).of(1.0)
+      result[3][1].real.should be_within(@tolerance).of(1.0)
+      result[3][2].real.should be_within(@tolerance).of(1.0)
+      result[3][3].real.should be_within(@tolerance).of(1.0)
+      result[0][0].imag.should be_within(@tolerance).of(0.0)
+      result[0][1].imag.should be_within(@tolerance).of(0.0)
+      result[0][2].imag.should be_within(@tolerance).of(0.0)
+      result[0][3].imag.should be_within(@tolerance).of(0.0)
+      result[1][0].imag.should be_within(@tolerance).of(0.0)
+      result[1][1].imag.should be_within(@tolerance).of(0.0)
+      result[1][2].imag.should be_within(@tolerance).of(0.0)
+      result[1][3].imag.should be_within(@tolerance).of(0.0)
+      result[2][0].imag.should be_within(@tolerance).of(0.0)
+      result[2][1].imag.should be_within(@tolerance).of(0.0)
+      result[2][2].imag.should be_within(@tolerance).of(0.0)
+      result[2][3].imag.should be_within(@tolerance).of(0.0)
+      result[3][0].imag.should be_within(@tolerance).of(0.0)
+      result[3][1].imag.should be_within(@tolerance).of(0.0)
+      result[3][2].imag.should be_within(@tolerance).of(0.0)
+      result[3][3].imag.should be_within(@tolerance).of(0.0)
+    end
+
+  end
+
+  describe "two dimensional Descreete Fourier Transform" do
+
+    it "should calculate DFT2D properly" do
+      data = [[Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0)],
+              [Complex(1.0, 0.0), Complex(2.0, 0.0), Complex(2.0, 0.0), Complex(1.0, 0.0)],
+              [Complex(1.0, 0.0), Complex(2.0, 0.0), Complex(2.0, 0.0), Complex(1.0, 0.0)],
+              [Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0)]]
+      result = data.fft2d
+      result[0][0].real.should be_within(@tolerance).of(20.0)
+      result[0][1].real.should be_within(@tolerance).of(-2.0)
+      result[0][2].real.should be_within(@tolerance).of(0.0)
+      result[0][3].real.should be_within(@tolerance).of(-2.0)
+      result[1][0].real.should be_within(@tolerance).of(-2.0)
+      result[1][1].real.should be_within(@tolerance).of(0.0)
+      result[1][2].real.should be_within(@tolerance).of(0.0)
+      result[1][3].real.should be_within(@tolerance).of(2.0)
+      result[2][0].real.should be_within(@tolerance).of(0.0)
+      result[2][1].real.should be_within(@tolerance).of(0.0)
+      result[2][2].real.should be_within(@tolerance).of(0.0)
+      result[2][3].real.should be_within(@tolerance).of(0.0)
+      result[3][0].real.should be_within(@tolerance).of(-2.0)
+      result[3][1].real.should be_within(@tolerance).of(2.0)
+      result[3][2].real.should be_within(@tolerance).of(0.0)
+      result[3][3].real.should be_within(@tolerance).of(0.0)
+      result[0][0].imag.should be_within(@tolerance).of(0.0)
+      result[0][1].imag.should be_within(@tolerance).of(-2.0)
+      result[0][2].imag.should be_within(@tolerance).of(0.0)
+      result[0][3].imag.should be_within(@tolerance).of(2.0)
+      result[1][0].imag.should be_within(@tolerance).of(-2.0)
+      result[1][1].imag.should be_within(@tolerance).of(2.0)
+      result[1][2].imag.should be_within(@tolerance).of(0.0)
+      result[1][3].imag.should be_within(@tolerance).of(0.0)
+      result[2][0].imag.should be_within(@tolerance).of(0.0)
+      result[2][1].imag.should be_within(@tolerance).of(0.0)
+      result[2][2].imag.should be_within(@tolerance).of(0.0)
+      result[2][3].imag.should be_within(@tolerance).of(0.0)
+      result[3][0].imag.should be_within(@tolerance).of(2.0)
+      result[3][1].imag.should be_within(@tolerance).of(0.0)
+      result[3][2].imag.should be_within(@tolerance).of(0.0)
+      result[3][3].imag.should be_within(@tolerance).of(-2.0)
+    end
+
+    it "should calculate RDFT2D properly" do
+      data = [[Complex(20.0,  0.0), Complex(-2.0, -2.0), Complex( 0.0,  0.0), Complex(-2.0,  2.0)],
+              [Complex(-2.0, -2.0), Complex( 0.0,  2.0), Complex( 0.0,  0.0), Complex( 2.0,  0.0)],
+              [Complex( 0.0,  0.0), Complex( 0.0,  0.0), Complex( 0.0,  0.0), Complex( 0.0,  0.0)],
+              [Complex(-2.0,  2.0), Complex( 2.0,  0.0), Complex( 0.0,  0.0), Complex( 0.0, -2.0)]]
+      result = data.rdft2d
+      result[0][0].real.should be_within(@tolerance).of(1.0)
+      result[0][1].real.should be_within(@tolerance).of(1.0)
+      result[0][2].real.should be_within(@tolerance).of(1.0)
+      result[0][3].real.should be_within(@tolerance).of(1.0)
+      result[1][0].real.should be_within(@tolerance).of(1.0)
+      result[1][1].real.should be_within(@tolerance).of(2.0)
+      result[1][2].real.should be_within(@tolerance).of(2.0)
+      result[1][3].real.should be_within(@tolerance).of(1.0)
+      result[2][0].real.should be_within(@tolerance).of(1.0)
+      result[2][1].real.should be_within(@tolerance).of(2.0)
+      result[2][2].real.should be_within(@tolerance).of(2.0)
+      result[2][3].real.should be_within(@tolerance).of(1.0)
+      result[3][0].real.should be_within(@tolerance).of(1.0)
+      result[3][1].real.should be_within(@tolerance).of(1.0)
+      result[3][2].real.should be_within(@tolerance).of(1.0)
+      result[3][3].real.should be_within(@tolerance).of(1.0)
+      result[0][0].imag.should be_within(@tolerance).of(0.0)
+      result[0][1].imag.should be_within(@tolerance).of(0.0)
+      result[0][2].imag.should be_within(@tolerance).of(0.0)
+      result[0][3].imag.should be_within(@tolerance).of(0.0)
+      result[1][0].imag.should be_within(@tolerance).of(0.0)
+      result[1][1].imag.should be_within(@tolerance).of(0.0)
+      result[1][2].imag.should be_within(@tolerance).of(0.0)
+      result[1][3].imag.should be_within(@tolerance).of(0.0)
+      result[2][0].imag.should be_within(@tolerance).of(0.0)
+      result[2][1].imag.should be_within(@tolerance).of(0.0)
+      result[2][2].imag.should be_within(@tolerance).of(0.0)
+      result[2][3].imag.should be_within(@tolerance).of(0.0)
+      result[3][0].imag.should be_within(@tolerance).of(0.0)
+      result[3][1].imag.should be_within(@tolerance).of(0.0)
+      result[3][2].imag.should be_within(@tolerance).of(0.0)
+      result[3][3].imag.should be_within(@tolerance).of(0.0)
+    end
+
+  end
+
 end

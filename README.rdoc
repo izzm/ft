@@ -5,7 +5,7 @@ This gem contains a library written in C to perform:
 * Discrete Fourier Transform (DFT[http://en.wikipedia.org/wiki/Discrete_Fourier_transform]),
 * Fast Fourier Transform (FFT[http://en.wikipedia.org/wiki/Fast_Fourier_transform]).
 
-The extension allows to do the transform in both directions.
+The extension allows to do the transform in both directions. Moreover it allows also to do the transform for two dimensinal data.
 
 == Instalation
 
@@ -31,19 +31,52 @@ Import the FT gem:
 
   require "ft"
 
+=== 1D data
+
 Prepare some data to process:
 
   data = [Complex(2.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(2.0, 0.0)]
 
 Make some data processing with FFT:
 
-  result = data.fft             # => [Complex(6.0, 0.0), Complex(1.0, 1.0), Complex(0.0, 0.0), Complex(1.0, -1.0)]
-  result.rfft                   # => [Complex(2.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(2.0, 0.0)]
+  result = data.fft # => [Complex(6.0, 0.0), Complex(1.0, 1.0), Complex(0.0, 0.0), Complex(1.0, -1.0)]
+  result.rfft       # => [Complex(2.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(2.0, 0.0)]
 
 And some data processing with DFT:
 
-  result = data.dft             # => [Complex(6.0, 0.0), Complex(1.0, 1.0), Complex(0.0, 0.0), Complex(1.0, -1.0)]
-  result.rdft                   # => [Complex(2.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(2.0, 0.0)]
+  result = data.dft # => [Complex(6.0, 0.0), Complex(1.0, 1.0), Complex(0.0, 0.0), Complex(1.0, -1.0)]
+  result.rdft       # => [Complex(2.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(2.0, 0.0)]
+
+=== 2D data
+
+Prepare some data to process:
+
+  data = [[Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0)],
+          [Complex(1.0, 0.0), Complex(2.0, 0.0), Complex(2.0, 0.0), Complex(1.0, 0.0)],
+          [Complex(1.0, 0.0), Complex(2.0, 0.0), Complex(2.0, 0.0), Complex(1.0, 0.0)],
+          [Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0)]]
+
+Make some data processing with FFT:
+
+  result = data.fft2d # => [[Complex(20.0,  0.0), Complex(-2.0, -2.0), Complex( 0.0,  0.0), Complex(-2.0,  2.0)],
+                      #     [Complex(-2.0, -2.0), Complex( 0.0,  2.0), Complex( 0.0,  0.0), Complex( 2.0,  0.0)],
+                      #     [Complex( 0.0,  0.0), Complex( 0.0,  0.0), Complex( 0.0,  0.0), Complex( 0.0,  0.0)],
+                      #     [Complex(-2.0,  2.0), Complex( 2.0,  0.0), Complex( 0.0,  0.0), Complex( 0.0, -2.0)]]
+  result.rfft2d       # => [[Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0)],
+                      #     [Complex(1.0, 0.0), Complex(2.0, 0.0), Complex(2.0, 0.0), Complex(1.0, 0.0)],
+                      #     [Complex(1.0, 0.0), Complex(2.0, 0.0), Complex(2.0, 0.0), Complex(1.0, 0.0)],
+                      #     [Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0)]]
+
+And some data processing with DFT:
+
+  result = data.dft2d # => [[Complex(20.0,  0.0), Complex(-2.0, -2.0), Complex( 0.0,  0.0), Complex(-2.0,  2.0)],
+                      #     [Complex(-2.0, -2.0), Complex( 0.0,  2.0), Complex( 0.0,  0.0), Complex( 2.0,  0.0)],
+                      #     [Complex( 0.0,  0.0), Complex( 0.0,  0.0), Complex( 0.0,  0.0), Complex( 0.0,  0.0)],
+                      #     [Complex(-2.0,  2.0), Complex( 2.0,  0.0), Complex( 0.0,  0.0), Complex( 0.0, -2.0)]]
+  result.rdft2d       # => [[Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0)],
+                      #     [Complex(1.0, 0.0), Complex(2.0, 0.0), Complex(2.0, 0.0), Complex(1.0, 0.0)],
+                      #     [Complex(1.0, 0.0), Complex(2.0, 0.0), Complex(2.0, 0.0), Complex(1.0, 0.0)],
+                      #     [Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0)]]
 
 == Credits
 

@@ -9,11 +9,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#ifndef TRUE
-#define TRUE 1
-#define FALSE 0
-#endif
-
 /**
  * @brief This function validates the incoming array for transforms.
  * The array of data should contain complex numbers.

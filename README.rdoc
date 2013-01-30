@@ -78,6 +78,29 @@ And some data processing with DFT:
                       #     [Complex(1.0, 0.0), Complex(2.0, 0.0), Complex(2.0, 0.0), Complex(1.0, 0.0)],
                       #     [Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0)]]
 
+=== Magnitude
+
+  data = [Complex(3.0, 4.0), Complex(1.0, 2.0), Complex(1.0, 1.0), Complex(2.0)]
+  data.magnitude  # => [5.0, 2.23606797749979, 1.4142135623730951, 2.0]
+
+=== Phase
+
+  data = [Complex(0.0, 1.0), Complex(1.0, 1.0), Complex(1.0, 0.0),  Complex(1.0, -1.0)]
+  data.phase  # => [0.0, 0.7853981633974483, 1.5707963267948966, 2.356194490192345]
+
+=== Switching quarters of 2D data
+
+  data = [[2.0, 1.0, 1.0, 2.0],
+          [1.0, 1.0, 1.0, 1.0],
+          [1.0, 1.0, 1.0, 1.0],
+          [2.0, 1.0, 1.0, 2.0]]
+  data.switch_quarters  # => [[1.0, 1.0, 1.0, 1.0],
+                              [1.0, 2.0, 2.0, 1.0],
+                              [1.0, 2.0, 2.0, 1.0],
+                              [1.0, 1.0, 1.0, 1.0]]
+
+(data should have equal both dimensions!)
+
 == Credits
 
 * Paweł Placzyński

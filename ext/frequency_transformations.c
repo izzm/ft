@@ -38,7 +38,7 @@ static VALUE validate(VALUE self)
 
     // make sure the size of the array is a power of 2
     if( (length < 2) || (length & (length - 1)) )
-        rb_raise(rb_eTypeError, "expected to have size being a power of 2");
+        rb_raise(rb_eArgError, "expected to have size being a power of 2");
 
     return self;
 }
@@ -295,6 +295,139 @@ static VALUE prepare_fft(VALUE input, int direction)
 }
 
 /**
+ * @brief Get phase array.
+ * This function grabs the array of phase values.
+ * @author placek@ragnarson.com
+ * @params input A Ruby input data array.
+ * @return The output Ruby Array with phase values.
+ */
+static VALUE phase(VALUE input)
+{
+    long i, length;
+    VALUE * values;
+    double real, imag;
+    VALUE output;
+
+    // validate array
+    values = RARRAY_PTR(validate(input));
+
+    // convert the ruby array into a C array of integers using NUM2DBL(Fixnum)
+    length = RARRAY_LEN(input);
+    output = rb_ary_new2(length);
+
+    // process values
+    for( i = 0; i < length; i++ )
+    {
+        real = NUM2DBL(RCOMPLEX(values[i])->real);
+        imag = NUM2DBL(RCOMPLEX(values[i])->imag);
+        rb_ary_push(output, DBL2NUM(atan2(real, imag)));
+    }
+
+    return output;
+}
+
+/**
+ * @brief Get magnitude array.
+ * This function grabs the array of magnitude values.
+ * @author placek@ragnarson.com
+ * @params inArray A Ruby input data array.
+ * @return The output Ruby Array with magnitude values.
+ */
+static VALUE magnitude(VALUE input)
+{
+    long i, length;
+    VALUE * values;
+    double real, imag;
+    VALUE output;
+
+    // validate array
+    values = RARRAY_PTR(validate(input));
+
+    // convert the ruby array into a C array of integers using NUM2DBL(Fixnum)
+    length = RARRAY_LEN(input);
+    output = rb_ary_new2(length);
+
+    // process values
+    for( i = 0; i < length; i++ )
+    {
+        real = NUM2DBL(RCOMPLEX(values[i])->real);
+        imag = NUM2DBL(RCOMPLEX(values[i])->imag);
+        rb_ary_push(output, DBL2NUM(sqrt(real * real + imag * imag)));
+    }
+
+    return output;
+}
+
+///**
+// * @brief Prepare data and switch quarters.
+// * This function switches quarters for further frequency processing.
+// * @author placek@ragnarson.com
+// * @params input A Ruby input data array.
+// * @return The output Ruby Array with switched data.
+// */
+//static VALUE switch_quarters(VALUE input)
+//{
+//    long length_x, length_y;
+//    long i, j;
+//    VALUE * values, output;
+//    double ** temp_values, temp;
+//
+//    // validate types and get dimensions
+//    Check_Type(input, T_ARRAY);
+//    values = RARRAY_PTR(input);
+//    length_y = RARRAY_LEN(input);
+//    for( i = 0; i < length_y; i++ )
+//        Check_Type(values[i], T_ARRAY);
+//    length_x = RARRAY_LEN(values[0]);
+//    for( i = 1; i < length_y; i++ )
+//        if( length_x != RARRAY_LEN(values[i]) )
+//            rb_raise(rb_eArgError, "expected an array of arrays with the same size");
+//
+//    // initialize output
+//    output = rb_ary_new2(length_y);
+//
+//    // TODO:
+//    // get values
+//    temp_values = (double**)malloc(length_y * sizeof(double*));
+//    for(j = 0; j < length_y; j++)
+//    {
+//        temp_values[j] = (double*)malloc(length_x * sizeof(double));
+//        for(i = 0; i < length_x; i++)
+//            temp_values[j][i] = NUM2DBL(RARRAY_PTR(values[j])[i]);
+//    }
+//
+//    // process switching
+//    for(i = 0; i < length_x / 2; i++)
+//        for(j = 0; j < length_y / 2; j++)
+//        {
+//            temp = temp_values[j][i];
+//            temp_values[j][i] = temp_values[j + length_y / 2][i + length_x / 2];
+//            temp_values[j + length_y / 2][i + length_x / 2] = temp;
+//        }
+//
+//    for(i = length_x / 2; i < length_x; i++)
+//        for(j = 0; j < length_y / 2; j++)
+//        {
+//            temp = temp_values[j][i];
+//            temp_values[j][i] = temp_values[j + length_y / 2][i - length_x / 2];
+//            temp_values[j + length_y / 2][i - length_x / 2] = temp;
+//        }
+//
+//    // rewrite values to ruby table
+//    for(j = 0; j < length_y; j++)
+//    {
+//        VALUE tempArray = rb_ary_new2(length_x);
+//        for(i = 0; i < length_x; i++)
+//            rb_ary_push(tempArray, DBL2NUM(temp_values[j][i]));
+//        rb_ary_push(output, tempArray);
+//        free(temp_values[j]);
+//    }
+//    free(temp_values);
+//
+//    return output;
+//}
+
+/**
  * @brief Compute a forward DFT.
  * @author jude.sutton@gmail.com
  * @params self A Ruby input data array.
@@ -347,4 +480,6 @@ void Init_frequency_transformations()
     rb_define_method(FT, "rdft", reverse_dft, 0);
     rb_define_method(FT, "fft", forward_fft, 0);
     rb_define_method(FT, "rfft", reverse_fft, 0);
+    rb_define_method(FT, "magnitude", magnitude, 0);
+    rb_define_method(FT, "phase", phase, 0);
 }

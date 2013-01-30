@@ -11,18 +11,18 @@ describe Array do
 
     it "should not allow anything different than Complex" do
       data = [2.0, 1.0, 1.0, 2.0]
-      lambda { data.fft }.should raise_error
-      lambda { data.rfft }.should raise_error
-      lambda { data.dft }.should raise_error
-      lambda { data.rdft }.should raise_error
+      lambda { data.fft }.should raise_error(TypeError)
+      lambda { data.rfft }.should raise_error(TypeError)
+      lambda { data.dft }.should raise_error(TypeError)
+      lambda { data.rdft }.should raise_error(TypeError)
     end
 
     it "should not allow array" do
       data = [Complex(2.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0)]
-      lambda { data.fft }.should raise_error
-      lambda { data.rfft }.should raise_error
-      lambda { data.dft }.should raise_error
-      lambda { data.rdft }.should raise_error
+      lambda { data.fft }.should raise_error(ArgumentError)
+      lambda { data.rfft }.should raise_error(ArgumentError)
+      lambda { data.dft }.should raise_error(ArgumentError)
+      lambda { data.rdft }.should raise_error(ArgumentError)
     end
 
   end

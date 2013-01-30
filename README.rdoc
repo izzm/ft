@@ -2,12 +2,10 @@
 
 This gem contains a library written in C to perform:
 
-* Discrete Hartley Transform (DHT[http://en.enwikipedia.enwikipediaorg/wiki/Discrete_Hartley_transform]),
-* Fast Hartley Transform (FHT),
 * Discrete Fourier Transform (DFT[http://en.wikipedia.org/wiki/Discrete_Fourier_transform]),
 * Fast Fourier Transform (FFT[http://en.wikipedia.org/wiki/Fast_Fourier_transform]).
 
-The extension allows to do the transform in both directions. Moreover all the transforms are avaliable in one and two dimensions to process.
+The extension allows to do the transform in both directions.
 
 == Instalation
 
@@ -25,56 +23,27 @@ and install it:
 
 == Requirements
 
-Data for Fourier transforms is a set of complex numbers. It need to be storaged in two seperate arrays of the same dimensions. First one will contain real parts of numbers, second one - imaginary parts. The length of data should be a power of 2 (otherwise FT methods will return nil).
-
-Data for Hartley transforms is a set of real numbers. Here the only restriction is a length of array - it should be a multiplication of 2
+Data for Fourier transforms is an array of complex numbers. The length of data should be a power of 2 (otherwise FT methods will raise exeption).
 
 == Usage
 
 Import the FT gem:
 
-  require 'ft'
+  require "ft"
 
 Prepare some data to process:
 
-  data =   [[2.0, 1.0, 1.0, 2.0],   # real parts of data
-            [0.0, 0.0, 0.0, 0.0]]   # imaginary parts of data
-
-  data2d = [[[1.0, 1.0, 1.0, 1.0],  # real parts
-             [1.0, 2.0, 2.0, 1.0],  #
-             [1.0, 2.0, 2.0, 1.0],  #
-             [1.0, 1.0, 1.0, 1.0]], #
-            [[0.0, 0.0, 0.0, 0.0],  # imaginary parts
-             [0.0, 0.0, 0.0, 0.0],  #
-             [0.0, 0.0, 0.0, 0.0],  #
-             [0.0, 0.0, 0.0, 0.0]]] #
-
-  hdata =   [2.0, 1.0, 1.0, 2.0]    # data for DHT or FHT
-  hdata2d = [[1.0, 1.0, 1.0, 1.0],  # 2D data for DHT or FHT
-             [1.0, 2.0, 2.0, 1.0],  #
-             [1.0, 2.0, 2.0, 1.0],  #
-             [1.0, 1.0, 1.0, 1.0]]  #
+  data = [Complex(2.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(2.0, 0.0)]
 
 Make some data processing with FFT:
 
-  result = data.fft             # will return FFT
-  result.rfft                   # will return reverse FFT
-  result2d = data.fft2d         # will return FFT for 2D data
-  result2d.rfft2d               # will return reverse FFT for 2D data
+  result = data.fft             # => [Complex(6.0, 0.0), Complex(1.0, 1.0), Complex(0.0, 0.0), Complex(1.0, -1.0)]
+  result.rfft                   # => [Complex(2.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(2.0, 0.0)]
 
 And some data processing with DFT:
 
-  result = data.dft             # will return DFT
-  result.rdft                   # will return reverse DFT
-  result2d = data.dft2d         # will return DFT for 2D data
-  result2d.rdft2d               # will return reverse DFT for 2D data
-
-Data processing with DHT or FHT:
-
-  result = hdata.dht
-  result = hdata.fht
-  result = hdata2d.dht2d
-  result = hdata2d.fht2d
+  result = data.dft             # => [Complex(6.0, 0.0), Complex(1.0, 1.0), Complex(0.0, 0.0), Complex(1.0, -1.0)]
+  result.rdft                   # => [Complex(2.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(2.0, 0.0)]
 
 == Credits
 

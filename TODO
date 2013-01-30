@@ -1,3 +1,4 @@
 TODO:
 
- * use instances of Complex class instead of two arrays of numbers;
+ * add 2D transform;
+ * add descreete and fast Hartley's transform in 1D and 2D;

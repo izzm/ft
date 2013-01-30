@@ -1,13 +1,13 @@
 /**
  * @file frequency_transformations.c
  * @brief The C API for processing a Discrete Fourier Transform (DFT), Discrete Hartley Transform (DHT) and Fast Fourier Transform (FFT) for Ruby.
- * Forked from https://github.com/slowjud/FFT
- * @author jude.sutton@gmail.com, placek@ragnarson.com
- * @date 15.05.2012
+ * @author placek@ragnarson.com
+ * @date 29.01.2013
  */
 #include "ruby.h"
 #include <math.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #ifndef TRUE
 #define TRUE 1
@@ -15,66 +15,102 @@
 #endif
 
 /**
- * @brief This function validates the incoming array for Fourier transforms.
- * The array of data should contain two arrays: the first one with real parts
- * and the second one with imaginary parts of processing data.
- * The function validates the length of incoming data, the length of inner arrays
+ * @brief This function validates the incoming array for transforms.
+ * The array of data should contain complex numbers.
+ * The function validates the length of incoming data
  * and reasures that the length is a power of 2.
- * @author jude.sutton@gmail.com
+ * Method will raise exception if array of data does not fit restrictions.
+ * @author placek@ragnarson.com
  * @param self An array we work on.
- * @return A validation result (1 if passed, 0 if failed).
+ * @return The same array.
  */
-static int fourier_validate(VALUE self)
+static VALUE validate(VALUE self)
 {
-    long length;
-    VALUE * values = RARRAY_PTR(self);
+    int length, i;
 
     // check if instance of Array
     Check_Type(self, T_ARRAY);
+    length = RARRAY_LEN(self);
 
-    // make sure we have an array of two arrays
-    if(RARRAY_LEN(self) != 2) return FALSE;
-
-    // make sure the arrays are of the same length
-    if(RARRAY_LEN( values[0]) != RARRAY_LEN(values[1])) return FALSE;
+    // make sure we have an array of complex numbers
+    for( i = 0; i < length; i++ )
+        Check_Type(RARRAY_PTR(self)[i], T_COMPLEX);
 
     // make sure the size of the array is a power of 2
-    length = RARRAY_LEN(values[0]);
-    if((length < 2) || (length & (length - 1))) return FALSE;
+    if( (length < 2) || (length & (length - 1)) )
+        rb_raise(rb_eTypeError, "expected to have size being a power of 2");
 
-    return TRUE;
+    return self;
 }
 
 /**
- * @brief This function validates the incoming array for Hartley transforms.
- * The array of data should contain only numbers. The length of array
- * should be a multiplication of 2.
+ * @brief Compute a DFT.
+ * This function computes the DFT and returns the Ruby Array with the same size
+ * and structure as input.
+ * @see validate()
  * @author placek@ragnarson.com
- * @param self An array we work on.
- * @return A validation result (1 if passed, 0 if failed).
+ * @param values An array of processing data.
+ * @params length Length of processing data.
+ * @params direction An DFT direction (1 - forward DFT, -1 - reverse DFT).
+ * @return An Ruby Array with DFT processed data.
  */
-static int hartley_validate(VALUE self)
+static VALUE perform_dft(double ** values, long length, int direction)
 {
-    long length;
-    VALUE * values = RARRAY_PTR(self);
+    long i, k;
+    double arg;
+    double cosarg, sinarg;
+    double * temp_values[2];
 
-    // check if instance of Array
-    Check_Type(self, T_ARRAY);
+    // prepare memory and result arrays
+    VALUE output = rb_ary_new2(length);
+    temp_values[0] = malloc(length * sizeof(double));
+    temp_values[1] = malloc(length * sizeof(double));
 
-    // make sure we have an array of at least one number
-    if(RARRAY_LEN(self) < 0) return FALSE;
+    // do the calculations
+    for(i = 0; i < length; i++)
+    {
+        temp_values[0][i] = 0;
+        temp_values[1][i] = 0;
+        arg = - direction * 2.0 * M_PI * (double)i / (double)length;
+        for(k = 0; k < length; k++)
+        {
+            cosarg = cos(k * arg);
+            sinarg = sin(k * arg);
+            temp_values[0][i] += (values[0][k] * cosarg - values[1][k] * sinarg);
+            temp_values[1][i] += (values[0][k] * sinarg + values[1][k] * cosarg);
+        }
+    }
 
-    // check length of an array
-    if(RARRAY_LEN(self) % 2 == 1) return FALSE;
+    // copy data to final arrays, process for inverse transform
+    if(direction == -1)
+    {
+        for(i = 0; i < length; i++)
+        {
+            rb_ary_push(output, rb_complex_new(
+                  DBL2NUM(temp_values[0][i] / (double)length),
+                  DBL2NUM(temp_values[1][i] / (double)length)));
+        }
+    } else {
+        for(i = 0; i < length; i++)
+        {
+            rb_ary_push(output, rb_complex_new(
+                  DBL2NUM(temp_values[0][i]),
+                  DBL2NUM(temp_values[1][i])));
+        }
+    }
 
-    return TRUE;
+    // free the memory
+    free(temp_values[0]);
+    free(temp_values[1]);
+
+    return output;
 }
 
 /**
  * @brief Compute a FFT.
  * This function computes the FFT and returns the Ruby Array with the same size
  * and structure as input.
- * @see fourier_validate()
+ * @see validate()
  * @author placek@ragnarson.com
  * @param values An array of processing data.
  * @params length Length of processing data.
@@ -83,9 +119,7 @@ static int hartley_validate(VALUE self)
  */
 static VALUE perform_fft(double ** values, long length, int direction)
 {
-    VALUE outArray = rb_ary_new2(2);
-    VALUE xArray = rb_ary_new2(length);
-    VALUE yArray = rb_ary_new2(length);
+    VALUE output = rb_ary_new2(length);
 
     unsigned int position, target, mask, jump;
     unsigned int step, group, pair, i;
@@ -164,238 +198,12 @@ static VALUE perform_fft(double ** values, long length, int direction)
     // convert the doubles into ruby numbers and stick them into a ruby array
     for(i = 0; i < length; i++)
     {
-        rb_ary_push(xArray, DBL2NUM(values[0][i]));
-        rb_ary_push(yArray, DBL2NUM(values[1][i]));
+        rb_ary_push(output, rb_complex_new(
+              DBL2NUM(values[0][i]),
+              DBL2NUM(values[1][i])));
     }
 
-    rb_ary_push(outArray, xArray);
-    rb_ary_push(outArray, yArray);
-
-    return outArray;
-}
-
-/**
- * @brief Compute a DFT.
- * This function computes the DFT and returns the Ruby Array with the same size
- * and structure as input.
- * @see fourier_validate()
- * @author placek@ragnarson.com
- * @param values An array of processing data.
- * @params length Length of processing data.
- * @params direction An DFT direction (1 - forward DFT, -1 - reverse DFT).
- * @return An Ruby Array with DFT processed data.
- */
-static VALUE perform_dft(double ** values, long length, int direction)
-{
-    long i, k;
-    double arg;
-    double cosarg, sinarg;
-    double * temp_values[2];
-
-    // prepare memory and result arrays
-    VALUE outArray = rb_ary_new2(2);
-    VALUE xArray = rb_ary_new2(length);
-    VALUE yArray = rb_ary_new2(length);
-    temp_values[0] = malloc(length * sizeof(double));
-    temp_values[1] = malloc(length * sizeof(double));
-
-    // do the calculations
-    for(i = 0; i < length; i++)
-    {
-        temp_values[0][i] = 0;
-        temp_values[1][i] = 0;
-        arg = - direction * 2.0 * M_PI * (double)i / (double)length;
-        for(k = 0; k < length; k++)
-        {
-            cosarg = cos(k * arg);
-            sinarg = sin(k * arg);
-            temp_values[0][i] += (values[0][k] * cosarg - values[1][k] * sinarg);
-            temp_values[1][i] += (values[0][k] * sinarg + values[1][k] * cosarg);
-        }
-    }
-
-    // copy data to final arrays, process for inverse transform
-    if(direction == -1)
-    {
-        for(i = 0; i < length; i++)
-        {
-            rb_ary_push(xArray, DBL2NUM(temp_values[0][i] / (double)length));
-            rb_ary_push(yArray, DBL2NUM(temp_values[1][i] / (double)length));
-        }
-    } else {
-        for(i = 0; i < length; i++)
-        {
-            rb_ary_push(xArray, DBL2NUM(temp_values[0][i]));
-            rb_ary_push(yArray, DBL2NUM(temp_values[1][i]));
-        }
-    }
-
-    // free the memory
-    free(temp_values[0]);
-    free(temp_values[1]);
-
-    // prepare result and return it
-    rb_ary_push(outArray, xArray);
-    rb_ary_push(outArray, yArray);
-
-    return outArray;
-}
-
-/**
- * @brief Compute a FHT.
- * This function computes the FHT and returns the Ruby Array with the same size
- * as input.
- * @see hartley_validate()
- * @author placek@ragnarson.com
- * @param values An array of processing data.
- * @params length Length of processing data.
- * @return An Ruby Array with FHT processed data.
-zo */
-static VALUE perform_fht(double * values, long length)
-{
-    long i, k, scale = 1;
-    long level, group, position, match, arg;
-    double a, b, sqrt_length = sqrt(length);
-    double * C, * S;
-
-    // prepare memory and result array
-    VALUE outArray = rb_ary_new2(length);
-
-    // prepare table of cosines and sines
-    C = malloc(length / 2 * sizeof(double));
-    S = malloc(length / 2 * sizeof(double));
-    arg = 2.0 * M_PI / (double)length;
-    for(k = 0; k < length / 2; k++)
-    {
-        C[k] = cos(arg * (double)k);
-        S[k] = sin(arg * (double)k);
-    }
-
-    // calculate scale
-    for(i = length; i > 2; i >>= 1)
-        scale <<= 1;
-
-    for(level = 2; level <= length; level <<= 1)
-    {
-        for(group = 0; group < length; group += level)
-        {
-            i = 1;
-            for(position = group + level / 2 + 1, match = group + level - 1; position < match; position++, match--)
-            {
-                k = i * scale;
-                i++;
-                a = values[position];
-                b = values[match];
-                values[position] = a * C[k] + b * S[k];
-                values[match] = a * S[k] - b * C[k];
-            }
-            for(position = group, match = group + level / 2; match < group + level; position++, match++)
-            {
-                a = values[position];
-                b = values[match];
-                values[position] = a + b;
-                values[match] = a - b;
-            }
-        }
-        scale >>= 1;
-    }
-
-    // put values into ruby array
-    for(i = 0; i < length; i++)
-        rb_ary_push(outArray, DBL2NUM(values[i] / sqrt_length));
-
-    // free the memory
-    free(C);
-    free(S);
-
-    return outArray;
-}
-
-/**
- * @brief Compute a DHT.
- * This function computes the DHT and returns the Ruby Array with the same size
- * as input.
- * @see hartley_validate()
- * @author placek@ragnarson.com
- * @param values An array of processing data.
- * @params length Length of processing data.
- * @return An Ruby Array with DHT processed data.
-zo */
-static VALUE perform_dht(double * values, long length)
-{
-    long i, k;
-    double arg, cos_arg, sin_arg, sqrt_length = sqrt(length);
-    double * temp_values;
-
-    // prepare memory and result array
-    VALUE outArray = rb_ary_new2(length);
-    temp_values = malloc(length * sizeof(double));
-
-    // do the calculations
-    for(i = 0; i < length; i++)
-    {
-        temp_values[i] = 0.0;
-        arg = 2.0 * M_PI * (double)i / (double)length;
-        for(k = 0; k < length; k++)
-        {
-            cos_arg = cos((double)k * arg);
-            sin_arg = sin((double)k * arg);
-            temp_values[i] += values[k] * (sin_arg + cos_arg);
-        }
-        temp_values[i] /= sqrt_length;
-    }
-
-    // put values into ruby array
-    for(i = 0; i < length; i++)
-        rb_ary_push(outArray, DBL2NUM(temp_values[i]));
-
-    // free the memory
-    free(temp_values);
-
-    return outArray;
-}
-
-/**
- * @brief Prepare data to be processed.
- * This function converts a Ruby Array values into a C values to be processed
- * by perform_fft(). After processing FFT it returns it results.
- * @see perform_fft()
- * @author jude.sutton@gmail.com
- * @params inArray A Ruby input data array.
- * @params direction An FFT direction (1 - forward FFT, -1 - reverse FFT).
- * @return The output Ruby Array with FFT processed data.
- */
-static VALUE prepare_fft(VALUE inArray, int direction)
-{
-    long i, length;
-    VALUE * values;
-    double ** transformed;
-    VALUE outArray;
-
-    if(!fourier_validate(inArray))
-        return Qnil;
-
-    // convert the ruby array into a C array of integers using NUM2DBL(Fixnum)
-    values = RARRAY_PTR(inArray);
-    length = RARRAY_LEN(values[0]);
-    transformed = malloc(sizeof(double) * 2);
-    transformed[0] = malloc(sizeof(double*) * RARRAY_LEN(values[0]));
-    transformed[1] = malloc(sizeof(double*) * RARRAY_LEN(values[1]));
-    for( i = 0; i < length; i++ ) {
-        // process values
-        transformed[0][i] = NUM2DBL(RARRAY_PTR(values[0])[i]);
-        transformed[1][i] = NUM2DBL(RARRAY_PTR(values[1])[i]);
-    }
-
-    // do the actual transform
-    outArray = perform_fft(transformed, length, direction);
-
-    // no memory leaks
-    free(transformed[0]);
-    free(transformed[1]);
-    free(transformed);
-
-    return outArray;
+    return output;
 }
 
 /**
@@ -403,258 +211,87 @@ static VALUE prepare_fft(VALUE inArray, int direction)
  * This function converts a Ruby Array values into a C values to be processed
  * by perform_dft(). After processing DFT it returns it results.
  * @see perform_dft()
- * @author jude.sutton@gmail.com
- * @params inArray A Ruby input data array.
+ * @author placek@ragnarson.com
+ * @params input A Ruby input data array.
  * @params direction An DFT direction (1 - forward DFT, -1 - reverse DFT).
  * @return The output Ruby Array with DFT processed data.
  */
-static VALUE prepare_dft(VALUE inArray, int direction)
+static VALUE prepare_dft(VALUE input, int direction)
 {
     long i, length;
     VALUE * values;
     double ** transformed;
-    VALUE outArray;
+    VALUE output;
 
-    if(!fourier_validate(inArray))
-        return Qnil;
+    // validate array
+    values = RARRAY_PTR(validate(input));
 
-    // convert the ruby array into a C array of integers using NUM2DBL(Fixnum)
-    values = RARRAY_PTR(inArray);
-    length = RARRAY_LEN(values[0]);
+    // convert the ruby array into a C array of integers using NUM2DBL(Float)
+    length = RARRAY_LEN(input);
     transformed = malloc(sizeof(double) * 2);
-    transformed[0] = malloc(sizeof(double*) * RARRAY_LEN(values[0]));
-    transformed[1] = malloc(sizeof(double*) * RARRAY_LEN(values[1]));
-    for( i = 0; i < length; i++ ) {
-        // process values
-        transformed[0][i] = NUM2DBL(RARRAY_PTR(values[0])[i]);
-        transformed[1][i] = NUM2DBL(RARRAY_PTR(values[1])[i]);
+    transformed[0] = malloc(sizeof(double*) * length);
+    transformed[1] = malloc(sizeof(double*) * length);
+
+    // process values
+    for( i = 0; i < length; i++ )
+    {
+        transformed[0][i] = NUM2DBL(RCOMPLEX(values[i])->real);
+        transformed[1][i] = NUM2DBL(RCOMPLEX(values[i])->imag);
     }
 
     // do the actual transform
-    outArray = perform_dft(transformed, length, direction);
+    output = perform_dft(transformed, length, direction);
 
     // no memory leaks
     free(transformed[0]);
     free(transformed[1]);
     free(transformed);
 
-    return outArray;
+    return output;
 }
 
 /**
  * @brief Prepare data to be processed.
  * This function converts a Ruby Array values into a C values to be processed
- * by perform_fht(). After processing DHT it returns it results.
- * @see perform_fht()
+ * by perform_fft(). After processing FFT it returns it results.
+ * @see perform_fft()
  * @author placek@ragnarson.com
- * @params inArray A Ruby input data array.
- * @return The output Ruby Array with FHT processed data.
+ * @params input A Ruby input data array.
+ * @params direction An FFT direction (1 - forward FFT, -1 - reverse FFT).
+ * @return The output Ruby Array with FFT processed data.
  */
-static VALUE prepare_fht(VALUE inArray)
+static VALUE prepare_fft(VALUE input, int direction)
 {
     long i, length;
     VALUE * values;
-    double * transformed;
-    VALUE outArray;
+    double ** transformed;
+    VALUE output;
 
-    if(!hartley_validate(inArray))
-        return Qnil;
+    // validate array
+    values = RARRAY_PTR(validate(input));
 
-    // convert the ruby array into a C array of integers using NUM2DBL(Fixnum)
-    values = RARRAY_PTR(inArray);
-    length = RARRAY_LEN(inArray);
-    transformed = malloc(sizeof(double) * length);
-    for(i = 0; i < length; i++)
-        transformed[i] = NUM2DBL(values[i]);
+    // convert the ruby array into a C array of integers using NUM2DBL(Float)
+    length = RARRAY_LEN(input);
+    transformed = malloc(sizeof(double) * 2);
+    transformed[0] = malloc(sizeof(double*) * length);
+    transformed[1] = malloc(sizeof(double*) * length);
+
+    // process values
+    for( i = 0; i < length; i++ )
+    {
+        transformed[0][i] = NUM2DBL(RCOMPLEX(values[i])->real);
+        transformed[1][i] = NUM2DBL(RCOMPLEX(values[i])->imag);
+    }
 
     // do the actual transform
-    outArray = perform_fht(transformed, length);
+    output = perform_fft(transformed, length, direction);
 
     // no memory leaks
+    free(transformed[0]);
+    free(transformed[1]);
     free(transformed);
 
-    return outArray;
-}
-
-/**
- * @brief Prepare data to be processed.
- * This function converts a Ruby Array values into a C values to be processed
- * by perform_dht(). After processing DHT it returns it results.
- * @see perform_dht()
- * @author placek@ragnarson.com
- * @params inArray A Ruby input data array.
- * @return The output Ruby Array with DHT processed data.
- */
-static VALUE prepare_dht(VALUE inArray)
-{
-    long i, length;
-    VALUE * values;
-    double * transformed;
-    VALUE outArray;
-
-    if(!hartley_validate(inArray))
-        return Qnil;
-
-    // convert the ruby array into a C array of integers using NUM2DBL(Fixnum)
-    values = RARRAY_PTR(inArray);
-    length = RARRAY_LEN(inArray);
-    transformed = malloc(sizeof(double) * length);
-    for(i = 0; i < length; i++)
-        transformed[i] = NUM2DBL(values[i]);
-
-    // do the actual transform
-    outArray = perform_dht(transformed, length);
-
-    // no memory leaks
-    free(transformed);
-
-    return outArray;
-}
-
-/**
- * @brief Get phase array.
- * This function grabs the array of phase values.
- * @author placek@ragnarson.com
- * @params inArray A Ruby input data array.
- * @return The output Ruby Array with phase values.
- */
-static VALUE phase(VALUE inArray)
-{
-    long i, length;
-    VALUE * values;
-    double real, imag;
-    VALUE outArray;
-
-    if(!fourier_validate(inArray))
-        return Qnil;
-
-    // convert the ruby array into a C array of integers using NUM2DBL(Fixnum)
-    values = RARRAY_PTR(inArray);
-    length = RARRAY_LEN(values[0]);
-    outArray = rb_ary_new2(length);
-    for(i = 0; i < length; i++)
-    {
-        // process values
-        real = NUM2DBL(RARRAY_PTR(values[0])[i]);
-        imag = NUM2DBL(RARRAY_PTR(values[1])[i]);
-        rb_ary_push(outArray, DBL2NUM(atan2(real, imag)));
-    }
-
-    return outArray;
-}
-
-/**
- * @brief Get magnitude array.
- * This function grabs the array of magnitude values.
- * @author placek@ragnarson.com
- * @params inArray A Ruby input data array.
- * @return The output Ruby Array with magnitude values.
- */
-static VALUE magnitude(VALUE inArray)
-{
-    long i, length;
-    VALUE * values;
-    double real, imag;
-    VALUE outArray;
-
-    if(!fourier_validate(inArray))
-        return Qnil;
-
-    // convert the ruby array into a C array of integers using NUM2DBL(Fixnum)
-    values = RARRAY_PTR(inArray);
-    length = RARRAY_LEN(values[0]);
-    outArray = rb_ary_new2(length);
-    for(i = 0; i < length; i++)
-    {
-        // process values
-        real = NUM2DBL(RARRAY_PTR(values[0])[i]);
-        imag = NUM2DBL(RARRAY_PTR(values[1])[i]);
-        rb_ary_push(outArray, DBL2NUM(sqrt(real * real + imag * imag)));
-    }
-
-    return outArray;
-}
-
-/**
- * @brief Prepare data and switch quarters.
- * This function switches quarters for further frequency processing.
- * @author placek@ragnarson.com
- * @params inArray A Ruby input data array.
- * @return The output Ruby Array with switched data.
- */
-static VALUE switch_quarters(VALUE inArray)
-{
-    long length_x, length_y;
-    long i, j;
-    VALUE * values, outArray;
-    double ** temp_values, temp;
-
-    // get dimensions
-    values = RARRAY_PTR(inArray);
-    length_y = RARRAY_LEN(inArray);
-    length_x = RARRAY_LEN(values[0]);
-
-    // get values
-    temp_values = (double**)malloc(length_y * sizeof(double*));
-    for(j = 0; j < length_y; j++)
-    {
-        temp_values[j] = (double*)malloc(length_x * sizeof(double));
-        for(i = 0; i < length_x; i++)
-            temp_values[j][i] = NUM2DBL(RARRAY_PTR(values[j])[i]);
-    }
-    outArray = rb_ary_new2(length_y);
-
-    // process switching
-    for(i = 0; i < length_x / 2; i++)
-        for(j = 0; j < length_y / 2; j++)
-        {
-            temp = temp_values[j][i];
-            temp_values[j][i] = temp_values[j + length_y / 2][i + length_x / 2];
-            temp_values[j + length_y / 2][i + length_x / 2] = temp;
-        }
-
-    for(i = length_x / 2; i < length_x; i++)
-        for(j = 0; j < length_y / 2; j++)
-        {
-            temp = temp_values[j][i];
-            temp_values[j][i] = temp_values[j + length_y / 2][i - length_x / 2];
-            temp_values[j + length_y / 2][i - length_x / 2] = temp;
-        }
-
-    // rewrite values to ruby table
-    for(j = 0; j < length_y; j++)
-    {
-        VALUE tempArray = rb_ary_new2(length_x);
-        for(i = 0; i < length_x; i++)
-            rb_ary_push(tempArray, DBL2NUM(temp_values[j][i]));
-        rb_ary_push(outArray, tempArray);
-        free(temp_values[j]);
-    }
-    free(temp_values);
-
-    return outArray;
-}
-
-/**
- * @brief Compute a forward FFT.
- * @author jude.sutton@gmail.com
- * @params self A Ruby input data array.
- * @return A result of forward FFT.
- */
-static VALUE forward_fft(VALUE self)
-{
-    return prepare_fft(self, 1);
-}
-
-/**
- * @brief Compute a reverse FFT.
- * @author jude.sutton@gmail.com
- * @params self A Ruby input data array.
- * @return A result of reverse FFT.
- */
-static VALUE reverse_fft(VALUE self)
-{
-    return prepare_fft(self, -1);
+    return output;
 }
 
 /**
@@ -680,43 +317,34 @@ static VALUE reverse_dft(VALUE self)
 }
 
 /**
- * @brief Compute a forward FHT.
+ * @brief Compute a forward FFT.
  * @author jude.sutton@gmail.com
  * @params self A Ruby input data array.
- * @return A result of forward FHT.
+ * @return A result of forward FFT.
  */
-static VALUE forward_fht(VALUE self)
+static VALUE forward_fft(VALUE self)
 {
-    return prepare_fht(self);
+    return prepare_fft(self, 1);
 }
 
 /**
- * @brief Compute a forward DHT.
+ * @brief Compute a reverse FFT.
  * @author jude.sutton@gmail.com
  * @params self A Ruby input data array.
- * @return A result of forward DHT.
+ * @return A result of reverse FFT.
  */
-static VALUE forward_dht(VALUE self)
+static VALUE reverse_fft(VALUE self)
 {
-    return prepare_dht(self);
+    return prepare_fft(self, -1);
 }
 
-/**
- * @brief Initialize the FrequencyTransformations module.
- * Initializes the module and defines methods.
- * @author placek@ragnarson.com
- */
 VALUE FT;
 void Init_frequency_transformations()
 {
     FT = rb_define_module("FrequencyTransformations");
-    rb_define_method(FT, "fft", forward_fft, 0);
-    rb_define_method(FT, "rfft", reverse_fft, 0);
+    rb_define_method(FT, "validate", validate, 0);
     rb_define_method(FT, "dft", forward_dft, 0);
     rb_define_method(FT, "rdft", reverse_dft, 0);
-    rb_define_method(FT, "dht", forward_dht, 0);
-    rb_define_method(FT, "fht", forward_fht, 0);
-    rb_define_method(FT, "switch_quarters", switch_quarters, 0);
-    rb_define_method(FT, "magnitude", magnitude, 0);
-    rb_define_method(FT, "phase", phase, 0);
+    rb_define_method(FT, "fft", forward_fft, 0);
+    rb_define_method(FT, "rfft", reverse_fft, 0);
 }

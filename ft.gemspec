@@ -1,9 +1,9 @@
 Gem::Specification.new do |s|
   s.name        = "ft"
-  s.version     = "0.3.3"
-  s.date        = "2012-05-16"
+  s.version     = "0.4.0"
+  s.date        = "2013-01-29"
   s.summary     = "Frequency Transforms for Ruby"
-  s.description = "A C library to compute Discrete Hartley Transform (DHT), Fast Hartley Transform (FHT), Discrete Fourier Transform (DFT) and Fast Fourier Transform (FFT) for Ruby"
+  s.description = "A C library to compute Discrete Fourier Transform (DFT) and Fast Fourier Transform (FFT) for Ruby"
   s.authors     = ["Paweł Placzyński", "Jude Sutton"]
   s.email       = ["placek@ragnarson.com", "jude.sutton@gmail.com"]
   s.files       = `git ls-files`.split("\n")

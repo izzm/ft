@@ -1,8 +1,8 @@
 source :rubygems
 
-gem 'bundler'
+gem "bundler"
 
 group :test do
-  gem 'rspec'
-  gem 'plymouth'
+  gem "rspec"
+  gem "plymouth"
 end

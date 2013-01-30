@@ -358,74 +358,62 @@ static VALUE magnitude(VALUE input)
     return output;
 }
 
-///**
-// * @brief Prepare data and switch quarters.
-// * This function switches quarters for further frequency processing.
-// * @author placek@ragnarson.com
-// * @params input A Ruby input data array.
-// * @return The output Ruby Array with switched data.
-// */
-//static VALUE switch_quarters(VALUE input)
-//{
-//    long length_x, length_y;
-//    long i, j;
-//    VALUE * values, output;
-//    double ** temp_values, temp;
-//
-//    // validate types and get dimensions
-//    Check_Type(input, T_ARRAY);
-//    values = RARRAY_PTR(input);
-//    length_y = RARRAY_LEN(input);
-//    for( i = 0; i < length_y; i++ )
-//        Check_Type(values[i], T_ARRAY);
-//    length_x = RARRAY_LEN(values[0]);
-//    for( i = 1; i < length_y; i++ )
-//        if( length_x != RARRAY_LEN(values[i]) )
-//            rb_raise(rb_eArgError, "expected an array of arrays with the same size");
-//
-//    // initialize output
-//    output = rb_ary_new2(length_y);
-//
-//    // TODO:
-//    // get values
-//    temp_values = (double**)malloc(length_y * sizeof(double*));
-//    for(j = 0; j < length_y; j++)
-//    {
-//        temp_values[j] = (double*)malloc(length_x * sizeof(double));
-//        for(i = 0; i < length_x; i++)
-//            temp_values[j][i] = NUM2DBL(RARRAY_PTR(values[j])[i]);
-//    }
-//
-//    // process switching
-//    for(i = 0; i < length_x / 2; i++)
-//        for(j = 0; j < length_y / 2; j++)
-//        {
-//            temp = temp_values[j][i];
-//            temp_values[j][i] = temp_values[j + length_y / 2][i + length_x / 2];
-//            temp_values[j + length_y / 2][i + length_x / 2] = temp;
-//        }
-//
-//    for(i = length_x / 2; i < length_x; i++)
-//        for(j = 0; j < length_y / 2; j++)
-//        {
-//            temp = temp_values[j][i];
-//            temp_values[j][i] = temp_values[j + length_y / 2][i - length_x / 2];
-//            temp_values[j + length_y / 2][i - length_x / 2] = temp;
-//        }
-//
-//    // rewrite values to ruby table
-//    for(j = 0; j < length_y; j++)
-//    {
-//        VALUE tempArray = rb_ary_new2(length_x);
-//        for(i = 0; i < length_x; i++)
-//            rb_ary_push(tempArray, DBL2NUM(temp_values[j][i]));
-//        rb_ary_push(output, tempArray);
-//        free(temp_values[j]);
-//    }
-//    free(temp_values);
-//
-//    return output;
-//}
+/**
+ * @brief Prepare data and switch quarters.
+ * This function switches quarters for further frequency processing.
+ * @author placek@ragnarson.com
+ * @params input A Ruby input data array.
+ * @return The output Ruby Array with switched data.
+ */
+static VALUE switch_quarters(VALUE input)
+{
+    long length_x, length_y;
+    long i, j;
+    VALUE * values, output, temp_array, temp;
+
+    // validate types and get dimensions
+    Check_Type(input, T_ARRAY);
+    values = RARRAY_PTR(input);
+    length_y = RARRAY_LEN(input);
+    for( i = 0; i < length_y; i++ )
+        Check_Type(values[i], T_ARRAY);
+    length_x = RARRAY_LEN(values[0]);
+    for( i = 1; i < length_y; i++ )
+        if( length_x != RARRAY_LEN(values[i]) )
+            rb_raise(rb_eArgError, "expected an array of arrays with the same size");
+
+    // initialize temp_array and rewrite values to output array
+    temp_array = rb_ary_new2(length_y);
+    for( j = 0; j < length_y; j++ )
+        rb_ary_push(temp_array, rb_ary_dup(RARRAY_PTR(input)[j]));
+
+    // process switching
+    for(i = 0; i < length_x / 2; i++)
+        for(j = 0; j < length_y / 2; j++)
+        {
+            temp = RARRAY_PTR(RARRAY_PTR(temp_array)[j])[i];
+            RARRAY_PTR(RARRAY_PTR(temp_array)[j])[i] = RARRAY_PTR(RARRAY_PTR(temp_array)[j + length_y / 2])[i + length_x / 2];
+            RARRAY_PTR(RARRAY_PTR(temp_array)[j + length_y / 2])[i + length_x / 2] = temp;
+        }
+
+    for(i = length_x / 2; i < length_x; i++)
+        for(j = 0; j < length_y / 2; j++)
+        {
+            temp = RARRAY_PTR(RARRAY_PTR(temp_array)[j])[i];
+            RARRAY_PTR(RARRAY_PTR(temp_array)[j])[i] = RARRAY_PTR(RARRAY_PTR(temp_array)[j + length_y / 2])[i - length_x / 2];
+            RARRAY_PTR(RARRAY_PTR(temp_array)[j + length_y / 2])[i - length_x / 2] = temp;
+        }
+
+    // rewrite values to ruby table
+    output = rb_ary_new2(length_y);
+    for( j = 0; j < length_y; j++ )
+        rb_ary_push(output, rb_ary_dup(RARRAY_PTR(temp_array)[j]));
+
+    // clear
+    rb_ary_free(temp_array);
+
+    return output;
+}
 
 /**
  * @brief Compute a forward DFT.
@@ -482,4 +470,5 @@ void Init_frequency_transformations()
     rb_define_method(FT, "rfft", reverse_fft, 0);
     rb_define_method(FT, "magnitude", magnitude, 0);
     rb_define_method(FT, "phase", phase, 0);
+    rb_define_method(FT, "switch_quarters", switch_quarters, 0);
 }

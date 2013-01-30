@@ -26,6 +26,27 @@ describe Array do
       end
     end
 
+    it "should switch quartes properly" do
+      data = [1, 2, 3, 4]
+      lambda { data.switch_quarters }.should raise_error(TypeError)
+      data = [[2.0, 1.0, 1.0, 2.0],
+              [1.0, 1.0, 1.0, 1.0],
+              [1.0, 1.0, 1.0, 1.0],
+              [2.0, 1.0, 1.0, 2.0]]
+      data.switch_quarters.should eq([[1.0, 1.0, 1.0, 1.0],
+                                      [1.0, 2.0, 2.0, 1.0],
+                                      [1.0, 2.0, 2.0, 1.0],
+                                      [1.0, 1.0, 1.0, 1.0]])
+      data = [[Complex(2.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(2.0, 0.0)],
+              [Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0)],
+              [Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0)],
+              [Complex(2.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(2.0, 0.0)]]
+      data.switch_quarters.should eq([[Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0)],
+                                      [Complex(1.0, 0.0), Complex(2.0, 0.0), Complex(2.0, 0.0), Complex(1.0, 0.0)],
+                                      [Complex(1.0, 0.0), Complex(2.0, 0.0), Complex(2.0, 0.0), Complex(1.0, 0.0)],
+                                      [Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0)]])
+    end
+
   end
 
 end

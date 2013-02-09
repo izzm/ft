@@ -2,6 +2,8 @@
 
 This gem contains a library written in C to perform:
 
+* Discrete Hartley Transform (DHT[http://en.enwikipedia.enwikipediaorg/wiki/Discrete_Hartley_transform]),
+* Fast Hartley Transform (FHT),
 * Discrete Fourier Transform (DFT[http://en.wikipedia.org/wiki/Discrete_Fourier_transform]),
 * Fast Fourier Transform (FFT[http://en.wikipedia.org/wiki/Fast_Fourier_transform]).
 
@@ -25,13 +27,15 @@ and install it:
 
 Data for Fourier transforms is an array of complex numbers. The length of data should be a power of 2 (otherwise FT methods will raise exeption).
 
+Data for Hartley transforms is a set of complex numbers. Here the only restriction is a length of array - it should be a multiplication of 2.
+
 == Usage
 
 Import the FT gem:
 
   require "ft"
 
-=== 1D data
+=== Fourier 1D data
 
 Prepare some data to process:
 
@@ -47,7 +51,7 @@ And some data processing with DFT:
   result = data.dft # => [Complex(6.0, 0.0), Complex(1.0, 1.0), Complex(0.0, 0.0), Complex(1.0, -1.0)]
   result.rdft       # => [Complex(2.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(2.0, 0.0)]
 
-=== 2D data
+=== Fourier 2D data
 
 Prepare some data to process:
 
@@ -77,6 +81,52 @@ And some data processing with DFT:
                       #     [Complex(1.0, 0.0), Complex(2.0, 0.0), Complex(2.0, 0.0), Complex(1.0, 0.0)],
                       #     [Complex(1.0, 0.0), Complex(2.0, 0.0), Complex(2.0, 0.0), Complex(1.0, 0.0)],
                       #     [Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0)]]
+
+=== Hartley 1D data
+
+DHT:
+
+  data = [Complex(2.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(2.0, 0.0)]
+  result = data.dht  # => [Complex(3.0, 0.0), Complex(0.0, 0.0), Complex(0.0, 0.0), Complex(1.0, 0.0)]
+  result.dht         # => [Complex(2.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(2.0, 0.0)]
+
+FHT:
+
+  data = [Complex(2.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(2.0, 0.0)]
+  result = data.fht  # => [Complex(3.0, 0.0), Complex(0.0, 0.0), Complex(0.0, 0.0), Complex(1.0, 0.0)]
+  result.fht         # => [Complex(2.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(2.0, 0.0)]
+
+=== Hartley 2D data
+
+DHT:
+
+  data = [[Complex( 1.0, 0.0), Complex( 1.0, 0.0), Complex( 1.0, 0.0), Complex( 1.0, 0.0)],
+          [Complex( 1.0, 0.0), Complex( 2.0, 0.0), Complex( 2.0, 0.0), Complex( 1.0, 0.0)],
+          [Complex( 1.0, 0.0), Complex( 2.0, 0.0), Complex( 2.0, 0.0), Complex( 1.0, 0.0)],
+          [Complex( 1.0, 0.0), Complex( 1.0, 0.0), Complex( 1.0, 0.0), Complex( 1.0, 0.0)]]
+  result = data.dht2d  # => [[Complex( 5.0, 0.0), Complex( 0.0, 0.0), Complex( 0.0, 0.0), Complex(-1.0, 0.0)],
+                             [Complex( 0.0, 0.0), Complex( 0.0, 0.0), Complex( 0.0, 0.0), Complex( 0.0, 0.0)],
+                             [Complex( 0.0, 0.0), Complex( 0.0, 0.0), Complex( 0.0, 0.0), Complex( 0.0, 0.0)],
+                             [Complex(-1.0, 0.0), Complex( 0.0, 0.0), Complex( 0.0, 0.0), Complex( 1.0, 0.0)]]
+  result.dht2d         # => [[Complex( 1.0, 0.0), Complex( 1.0, 0.0), Complex( 1.0, 0.0), Complex( 1.0, 0.0)],
+                             [Complex( 1.0, 0.0), Complex( 2.0, 0.0), Complex( 2.0, 0.0), Complex( 1.0, 0.0)],
+                             [Complex( 1.0, 0.0), Complex( 2.0, 0.0), Complex( 2.0, 0.0), Complex( 1.0, 0.0)],
+                             [Complex( 1.0, 0.0), Complex( 1.0, 0.0), Complex( 1.0, 0.0), Complex( 1.0, 0.0)]]
+
+FHT:
+
+  data = [[Complex( 1.0, 0.0), Complex( 1.0, 0.0), Complex( 1.0, 0.0), Complex( 1.0, 0.0)],
+          [Complex( 1.0, 0.0), Complex( 2.0, 0.0), Complex( 2.0, 0.0), Complex( 1.0, 0.0)],
+          [Complex( 1.0, 0.0), Complex( 2.0, 0.0), Complex( 2.0, 0.0), Complex( 1.0, 0.0)],
+          [Complex( 1.0, 0.0), Complex( 1.0, 0.0), Complex( 1.0, 0.0), Complex( 1.0, 0.0)]]
+  result = data.fht2d  # => [[Complex( 5.0, 0.0), Complex( 0.0, 0.0), Complex( 0.0, 0.0), Complex(-1.0, 0.0)],
+                             [Complex( 0.0, 0.0), Complex( 0.0, 0.0), Complex( 0.0, 0.0), Complex( 0.0, 0.0)],
+                             [Complex( 0.0, 0.0), Complex( 0.0, 0.0), Complex( 0.0, 0.0), Complex( 0.0, 0.0)],
+                             [Complex(-1.0, 0.0), Complex( 0.0, 0.0), Complex( 0.0, 0.0), Complex( 1.0, 0.0)]]
+  result.fht2d         # => [[Complex( 1.0, 0.0), Complex( 1.0, 0.0), Complex( 1.0, 0.0), Complex( 1.0, 0.0)],
+                             [Complex( 1.0, 0.0), Complex( 2.0, 0.0), Complex( 2.0, 0.0), Complex( 1.0, 0.0)],
+                             [Complex( 1.0, 0.0), Complex( 2.0, 0.0), Complex( 2.0, 0.0), Complex( 1.0, 0.0)],
+                             [Complex( 1.0, 0.0), Complex( 1.0, 0.0), Complex( 1.0, 0.0), Complex( 1.0, 0.0)]]
 
 === Magnitude
 

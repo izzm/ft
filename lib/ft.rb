@@ -19,6 +19,14 @@ class Array
     perform_transformation(:rfft)
   end
 
+  def dht2d
+    perform_transformation(:dht)
+  end
+
+  def fht2d
+    perform_transformation(:fht)
+  end
+
   private
 
   def perform_transformation method
